@@ -11,3 +11,5 @@ shred keys.gpg
 sed -i 's|-SNAPSHOT||g' pom.xml
 
 mvn deploy -q -P release
+
+# add release notes step
