@@ -28,5 +28,6 @@ notifications:
     recipients:
       - tapabrata.pal@capitalone.com
       - ragha.vema@capitalone.com
+      - hygieia2@capitalone.com
     on_success: always
     on_failure: always
