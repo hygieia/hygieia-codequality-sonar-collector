@@ -5,11 +5,13 @@ import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorItemConfigHistory;
 import com.capitalone.dashboard.model.CollectorType;
 import com.capitalone.dashboard.model.ConfigHistOperationType;
+import com.capitalone.dashboard.model.Configuration;
 import com.capitalone.dashboard.model.SonarCollector;
 import com.capitalone.dashboard.model.SonarProject;
 import com.capitalone.dashboard.repository.BaseCollectorRepository;
 import com.capitalone.dashboard.repository.CodeQualityRepository;
 import com.capitalone.dashboard.repository.ComponentRepository;
+import com.capitalone.dashboard.repository.ConfigurationRepository;
 import com.capitalone.dashboard.repository.SonarCollectorRepository;
 import com.capitalone.dashboard.repository.SonarProfileRepostory;
 import com.capitalone.dashboard.repository.SonarProjectRepository;
@@ -46,6 +48,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private final SonarClientSelector sonarClientSelector;
     private final SonarSettings sonarSettings;
     private final ComponentRepository dbComponentRepository;
+    private final ConfigurationRepository configurationRepository;
 
     @Autowired
     public SonarCollectorTask(TaskScheduler taskScheduler,
@@ -55,6 +58,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                               SonarProfileRepostory sonarProfileRepostory,
                               SonarSettings sonarSettings,
                               SonarClientSelector sonarClientSelector,
+                              ConfigurationRepository configurationRepository,
                               ComponentRepository dbComponentRepository) {
         super(taskScheduler, "Sonar");
         this.sonarCollectorRepository = sonarCollectorRepository;
@@ -64,11 +68,30 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         this.sonarSettings = sonarSettings;
         this.sonarClientSelector = sonarClientSelector;
         this.dbComponentRepository = dbComponentRepository;
+        this.configurationRepository = configurationRepository;  
     }
 
     @Override
     public SonarCollector getCollector() {
-        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getVersions(), sonarSettings.getMetrics(),sonarSettings.getNiceNames());
+        
+        Configuration config = configurationRepository.findByCollectorName("Sonar");
+        // Only use Admin Page server configuration when available
+        // otherwise use properties file server configuration
+        if (config != null ) {
+            config.decryptOrEncrptInfo();
+            // To clear the username and password from existing run and
+            // pick the latest
+            sonarSettings.getUsernames().clear();
+            sonarSettings.getServers().clear();
+            sonarSettings.getPasswords().clear();
+            for (Map<String, String> sonarServer : config.getInfo()) {
+                sonarSettings.getServers().add(sonarServer.get("url"));
+                sonarSettings.getUsernames().add(sonarServer.get("userName"));
+                sonarSettings.getPasswords().add(sonarServer.get("password"));
+            }
+        }
+        
+        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getVersions(), sonarSettings.getMetrics(), sonarSettings.getNiceNames());
     }
 
     @Override
@@ -96,11 +119,16 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             for (int i = 0; i < collector.getSonarServers().size(); i++) {
 
                 String instanceUrl = collector.getSonarServers().get(i);
+                logBanner(instanceUrl);                
+
+                String username = sonarSettings.getUsernames().get(i);
+                String password = sonarSettings.getPasswords().get(i);
                 Double version = collector.getSonarVersions().get(i);
                 String metrics = collector.getSonarMetrics().get(i);
 
-                logBanner(instanceUrl);
                 SonarClient sonarClient = sonarClientSelector.getSonarClient(version);
+                sonarClient.setServerDetails(username, password);
+
                 List<SonarProject> projects = sonarClient.getProjects(instanceUrl);
                 latestProjects.addAll(projects);
 

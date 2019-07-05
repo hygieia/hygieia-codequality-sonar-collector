@@ -57,7 +57,7 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String EVENTS = "events";
 
     private final RestOperations rest;
-    private final HttpEntity<String> httpHeaders;
+    private HttpEntity<String> httpHeaders;
 
     private static final String MINUTES_FORMAT = "%smin";
     private static final String HOURS_FORMAT = "%sh";
@@ -66,11 +66,15 @@ public class DefaultSonar6Client implements SonarClient {
     private static final int PAGE_SIZE=500;
 
     @Autowired
-    public DefaultSonar6Client(Supplier<RestOperations> restOperationsSupplier, SonarSettings settings) {
-        this.httpHeaders = new HttpEntity<>(
-                this.createHeaders(settings.getUsername(), settings.getPassword())
-        );
+    public DefaultSonar6Client(Supplier<RestOperations> restOperationsSupplier) {
         this.rest = restOperationsSupplier.get();
+    }
+
+    @Override
+    public void setServerDetails(String username, String password) {
+        this.httpHeaders = new HttpEntity<>(
+                this.createHeaders(username, password)
+        );
     }
 
     @Override

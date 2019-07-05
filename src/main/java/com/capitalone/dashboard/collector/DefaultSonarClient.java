@@ -56,14 +56,18 @@ public class DefaultSonarClient implements SonarClient {
     protected static final String DATE = "date";
 
     protected final RestOperations rest;
-    protected final HttpEntity<String> httpHeaders;
+    protected HttpEntity<String> httpHeaders;
 
     @Autowired
-    public DefaultSonarClient(Supplier<RestOperations> restOperationsSupplier, SonarSettings settings) {
-        this.httpHeaders = new HttpEntity<>(
-                this.createHeaders(settings.getUsername(), settings.getPassword())
-            );
+    public DefaultSonarClient(Supplier<RestOperations> restOperationsSupplier) {
         this.rest = restOperationsSupplier.get();
+    }
+
+    @Override
+    public void setServerDetails(String username, String password) {
+        this.httpHeaders = new HttpEntity<>(
+                this.createHeaders(username, password)
+            );
     }
 
     @Override

@@ -49,7 +49,7 @@ public class DefaultSonar6ClientTest {
         when(restOperationsSupplier.get()).thenReturn(rest);
         settings = new SonarSettings();
         settings.setMetrics(Collections.singletonList(METRICS));
-        defaultSonar6Client = new DefaultSonar6Client(restOperationsSupplier, settings);
+        defaultSonar6Client = new DefaultSonar6Client(restOperationsSupplier);
     }
 
     @Test

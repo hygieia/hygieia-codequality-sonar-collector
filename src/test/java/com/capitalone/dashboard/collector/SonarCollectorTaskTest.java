@@ -95,6 +95,10 @@ public class SonarCollectorTaskTest {
     @Test
     public void collectOneServer43() throws Exception {
     	when(dbComponentRepository.findAll()).thenReturn(components());
+        when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("bob"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("matrix"));
+
         when(sonarClientSelector.getSonarClient(VERSION43)).thenReturn(defaultSonarClient);
         task.collect(collectorWithOneServer(VERSION43));
         verify(sonarClientSelector).getSonarClient(VERSION43);
@@ -104,6 +108,11 @@ public class SonarCollectorTaskTest {
     @Test
     public void collectOneServer54() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
+
+        when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("robert"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("k"));
+
         when(sonarClientSelector.getSonarClient(VERSION54)).thenReturn(defaultSonar6Client);
         task.collect(collectorWithOneServer(VERSION54));
         verify(sonarClientSelector).getSonarClient(VERSION54);
@@ -116,6 +125,13 @@ public class SonarCollectorTaskTest {
     @Test
     public void collectOneServer63() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
+
+        when(sonarSettings.getServers())
+            .thenReturn(Arrays.asList(SERVER1))
+            .thenReturn(Arrays.asList(SERVER1));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("yes"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("4kkpt"));
+
         when(sonarClientSelector.getSonarClient(VERSION63)).thenReturn(defaultSonar6Client);
         task.collect(collectorWithOneServer(VERSION63));
         verify(sonarClientSelector).getSonarClient(VERSION63);
@@ -128,6 +144,9 @@ public class SonarCollectorTaskTest {
     @Test
     public void collectTwoServer43And54() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
+        when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1, SERVER2));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("bob", "bob"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("k", "l"));
         when(sonarClientSelector.getSonarClient(VERSION54)).thenReturn(defaultSonar6Client);
         when(sonarClientSelector.getSonarClient(VERSION43)).thenReturn(defaultSonarClient);
         task.collect(collectorWithOnTwoServers(VERSION43, VERSION54));

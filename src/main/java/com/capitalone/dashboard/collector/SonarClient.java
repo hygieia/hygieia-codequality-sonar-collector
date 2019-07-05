@@ -15,5 +15,6 @@ public interface SonarClient {
     JSONArray getQualityProfiles(String instanceUrl) throws ParseException;
     List<String> retrieveProfileAndProjectAssociation(String instanceUrl,String qualityProfile) throws ParseException;
     JSONArray getQualityProfileConfigurationChanges(String instanceUrl,String qualityProfile) throws ParseException; 
+    void setServerDetails(String username, String password);
 
 }
