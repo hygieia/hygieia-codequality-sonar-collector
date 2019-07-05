@@ -11,7 +11,7 @@ import org.json.simple.parser.ParseException;
 public interface SonarClient {
 
     List<SonarProject> getProjects(String instanceUrl);
-    CodeQuality currentCodeQuality(SonarProject project, String metrics);
+    CodeQuality currentCodeQuality(SonarProject project);
     JSONArray getQualityProfiles(String instanceUrl) throws ParseException;
     List<String> retrieveProfileAndProjectAssociation(String instanceUrl,String qualityProfile) throws ParseException;
     JSONArray getQualityProfileConfigurationChanges(String instanceUrl,String qualityProfile) throws ParseException; 

@@ -151,11 +151,11 @@ public class SonarCollectorTaskTest {
     }
 
     private SonarCollector collectorWithOneServer(Double version) {
-        return SonarCollector.prototype(Collections.singletonList(SERVER1), Collections.singletonList(version), Collections.singletonList(METRICS1),Collections.singletonList(NICENAME1));
+        return SonarCollector.prototype(Collections.singletonList(SERVER1), Collections.singletonList(version), Collections.singletonList(NICENAME1));
     }
 
     private SonarCollector collectorWithOnTwoServers(Double version1, Double version2) {
-        return SonarCollector.prototype(Arrays.asList(SERVER1, SERVER2), Arrays.asList(version1, version2), Arrays.asList(METRICS1,METRICS2),Arrays.asList(NICENAME1,NICENAME2));
+        return SonarCollector.prototype(Arrays.asList(SERVER1, SERVER2), Arrays.asList(version1, version2), Arrays.asList(NICENAME1,NICENAME2));
     }
 
 }

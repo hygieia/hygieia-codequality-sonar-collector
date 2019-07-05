@@ -40,6 +40,7 @@ public class DefaultSonarClient implements SonarClient {
     protected static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     protected static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     protected static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
+    protected static final String METRICS = "ncloc,line_coverage,violations,critical_violations,major_violations,blocker_violations,violations_density,sqale_index,test_success_density,test_failures,test_errors,tests";
 
     protected static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     protected static final String ID = "id";
@@ -94,9 +95,9 @@ public class DefaultSonarClient implements SonarClient {
 
 
     @Override
-    public CodeQuality currentCodeQuality(SonarProject project, String metrics) {
+    public CodeQuality currentCodeQuality(SonarProject project) {
         String url = String.format(
-                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), metrics);
+                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), METRICS);
 
         try {
             JSONArray jsonArray = parseAsArray(url);

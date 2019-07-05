@@ -36,7 +36,7 @@ public class SonarCollector extends Collector {
         this.niceNames = niceNames;
     }
 
-    public static SonarCollector prototype(List<String> servers, List<Double> versions, List<String> metrics,List<String> niceNames) {
+    public static SonarCollector prototype(List<String> servers, List<Double> versions, List<String> niceNames) {
         SonarCollector protoType = new SonarCollector();
         protoType.setName("Sonar");
         protoType.setCollectorType(CollectorType.CodeQuality);
@@ -47,9 +47,6 @@ public class SonarCollector extends Collector {
         }
         if(versions!=null) {
             protoType.getSonarVersions().addAll(versions);
-        }
-        if(metrics!=null) {
-            protoType.getSonarMetrics().addAll(metrics);
         }
 
         if (!CollectionUtils.isEmpty(niceNames)) {

@@ -41,9 +41,7 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     private static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     private static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
-
-
-
+    private static final String METRICS = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static final String ID = "id";
     private static final String NAME = "name";
@@ -130,9 +128,9 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     @Override
-    public CodeQuality currentCodeQuality(SonarProject project, String metrics) {
+    public CodeQuality currentCodeQuality(SonarProject project) {
         String url = String.format(
-                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), metrics);
+                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), METRICS);
 
         try {
             ResponseEntity<String> response = rest.exchange(url, HttpMethod.GET, this.httpHeaders, String.class);
