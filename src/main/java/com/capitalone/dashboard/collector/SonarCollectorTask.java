@@ -33,10 +33,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component
 public class SonarCollectorTask extends CollectorTask<SonarCollector> {
-    @SuppressWarnings({ "PMD.UnusedPrivateField", "unused" })
+
     private static final Log LOG = LogFactory.getLog(SonarCollectorTask.class);
 
     private final SonarCollectorRepository sonarCollectorRepository;
@@ -132,24 +134,21 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 	 * @param collector
 	 *            the {@link SonarCollector}
 	 */
-
-    @SuppressWarnings("PMD.AvoidDeeplyNestedIfStmts") // agreed PMD, fixme
     private void clean(SonarCollector collector, List<SonarProject> existingProjects) {
-        Set<ObjectId> uniqueIDs = new HashSet<>();
-        for (com.capitalone.dashboard.model.Component comp : dbComponentRepository
-                .findAll()) {
-            if (comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty()) {
-                List<CollectorItem> itemList = comp.getCollectorItems().get(
-                        CollectorType.CodeQuality);
-                if (itemList != null) {
-                    for (CollectorItem ci : itemList) {
-                        if (ci != null && ci.getCollectorId().equals(collector.getId())) {
-                            uniqueIDs.add(ci.getId());
-                        }
-                    }
-                }
-            }
-        }
+        // extract unique collector item IDs from components
+        // (in this context collector_items are sonar projects)
+        Set<ObjectId> uniqueIDs = StreamSupport.stream(dbComponentRepository.findAll().spliterator(),false)
+            .filter( comp -> comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty())
+            .map(comp -> comp.getCollectorItems().get(CollectorType.CodeQuality))
+            // keep nonNull List<CollectorItem>
+            .filter(itemList -> itemList != null )
+            // merge all lists (flatten) into a stream
+            .flatMap(List::stream)
+            // keep nonNull CollectorItems
+            .filter(ci -> ci != null && ci.getCollectorId().equals(collector.getId()))
+            .map(CollectorItem::getId)
+            .collect(Collectors.toSet());
+
         List<SonarProject> stateChangeJobList = new ArrayList<>();
         Set<ObjectId> udId = new HashSet<>();
         udId.add(collector.getId());
@@ -201,7 +200,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         log("Updated", start, count);
     }
     
-    @SuppressWarnings("PMD.AvoidDeeplyNestedIfStmts")
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
     	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);   
     	JSONArray sonarProfileConfigurationChanges = new JSONArray();
