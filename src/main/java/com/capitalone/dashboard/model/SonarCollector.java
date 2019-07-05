@@ -10,7 +10,6 @@ import java.util.Map;
 
 public class SonarCollector extends Collector {
     private List<String> sonarServers = new ArrayList<>();
-    private List<Double> sonarVersions = new ArrayList<>();
     private List<String> sonarMetrics = new ArrayList<>();
     private List<String> niceNames = new ArrayList<>();
     private static final String NICE_NAME = "niceName";
@@ -19,14 +18,10 @@ public class SonarCollector extends Collector {
     public List<String> getSonarServers() {
         return sonarServers;
     }
-    public List<Double> getSonarVersions() {
-        return sonarVersions;
-    }
 
     public List<String> getSonarMetrics() {
         return sonarMetrics;
     }
-
 
     public List<String> getNiceNames() {
         return niceNames;
@@ -36,7 +31,7 @@ public class SonarCollector extends Collector {
         this.niceNames = niceNames;
     }
 
-    public static SonarCollector prototype(List<String> servers, List<Double> versions, List<String> metrics,List<String> niceNames) {
+    public static SonarCollector prototype(List<String> servers, List<String> metrics,List<String> niceNames) {
         SonarCollector protoType = new SonarCollector();
         protoType.setName("Sonar");
         protoType.setCollectorType(CollectorType.CodeQuality);
@@ -44,9 +39,6 @@ public class SonarCollector extends Collector {
         protoType.setEnabled(true);
         if(servers!=null) {
             protoType.getSonarServers().addAll(servers);
-        }
-        if(versions!=null) {
-            protoType.getSonarVersions().addAll(versions);
         }
         if(metrics!=null) {
             protoType.getSonarMetrics().addAll(metrics);
