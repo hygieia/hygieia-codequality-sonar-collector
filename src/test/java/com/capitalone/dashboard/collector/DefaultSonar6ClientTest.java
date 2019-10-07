@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.collector;
 
+import com.capitalone.dashboard.client.RestClient;
 import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.model.SonarProject;
@@ -49,7 +50,7 @@ public class DefaultSonar6ClientTest {
         when(restOperationsSupplier.get()).thenReturn(rest);
         settings = new SonarSettings();
         settings.setMetrics(Collections.singletonList(METRICS));
-        defaultSonar6Client = new DefaultSonar6Client(restOperationsSupplier, settings);
+        defaultSonar6Client = new DefaultSonar6Client(new RestClient(restOperationsSupplier), settings);
     }
 
     @Test
