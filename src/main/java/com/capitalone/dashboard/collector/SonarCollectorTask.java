@@ -98,10 +98,11 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 String instanceUrl = collector.getSonarServers().get(i);
                 Double version = collector.getSonarVersions().get(i);
                 String metrics = collector.getSonarMetrics().get(i);
+                String token = getToken(sonarSettings.getTokens(),i);
 
                 logBanner(instanceUrl);
                 SonarClient sonarClient = sonarClientSelector.getSonarClient(version);
-                List<SonarProject> projects = sonarClient.getProjects(instanceUrl);
+                List<SonarProject> projects = sonarClient.getProjects(instanceUrl,token);
                 latestProjects.addAll(projects);
 
                 int projSize = ((CollectionUtils.isEmpty(projects)) ? 0 : projects.size());
@@ -126,6 +127,14 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         deleteUnwantedJobs(latestProjects, existingProjects, collector);
     }
 
+
+    private String getToken(List<String> tokens,int index){
+        if(CollectionUtils.isEmpty(tokens)) return null;
+        if (CollectionUtils.isNotEmpty(tokens)){
+            return tokens.get(index);
+        }
+        return null;
+    }
 	/**
 	 * Clean up unused sonar collector items
 	 *
