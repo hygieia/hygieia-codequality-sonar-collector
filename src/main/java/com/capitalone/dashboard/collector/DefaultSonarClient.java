@@ -63,7 +63,7 @@ public class DefaultSonarClient implements SonarClient {
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl) {
+    public List<SonarProject> getProjects(String instanceUrl,String token) {
         List<SonarProject> projects = new ArrayList<>();
         String url = instanceUrl + URL_RESOURCES;
 
