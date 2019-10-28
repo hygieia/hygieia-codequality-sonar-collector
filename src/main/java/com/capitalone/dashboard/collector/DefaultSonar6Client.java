@@ -71,7 +71,12 @@ public class DefaultSonar6Client implements SonarClient {
 
     @Autowired
     public DefaultSonar6Client(RestClient restClient, SonarSettings settings) {
-        this.userInfo = new RestUserInfo(settings.getUsername(), settings.getPassword());
+        if(StringUtils.isEmpty(settings.getUsername())|| StringUtils.isEmpty(settings.getPassword())){
+            this.userInfo= new RestUserInfo("","");
+        }else{
+            this.userInfo = new RestUserInfo(settings.getUsername(),settings.getPassword());
+        }
+
         this.restClient = restClient;
     }
 
@@ -82,10 +87,11 @@ public class DefaultSonar6Client implements SonarClient {
         // take authenticated route
         if(Objects.nonNull(token)){
             url = instanceUrl +  URL_RESOURCES_AUTHENTICATED;
+            userInfo.setToken(token);
         }else{
             url = instanceUrl + URL_RESOURCES;
         }
-        userInfo.setToken(token);
+
         try {
             JSONArray jsonArray = getProjects(url);
             for (Object obj : jsonArray) {
@@ -414,6 +420,7 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     private HttpHeaders setHeaders(RestUserInfo userInfo){
+        if(Objects.isNull(userInfo)) return null;
         if(StringUtils.isNotBlank(userInfo.getUserId())&& StringUtils.isNotBlank(userInfo.getPassCode())){
             return createHeaders(userInfo.getUserId(),userInfo.getPassCode());
         }else if(StringUtils.isNotBlank(userInfo.getToken())){
