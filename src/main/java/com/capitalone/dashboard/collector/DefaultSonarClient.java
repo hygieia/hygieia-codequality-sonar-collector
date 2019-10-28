@@ -58,7 +58,7 @@ public class DefaultSonarClient implements SonarClient {
 
     @Autowired
     public DefaultSonarClient(RestClient restClient, SonarSettings settings) {
-        userInfo = new RestUserInfo(settings.getUsername(), settings.getPassword());
+        userInfo = settings.getUsername()==null?null:new RestUserInfo(settings.getUsername(), settings.getPassword());
         this.restClient = restClient;
     }
 
