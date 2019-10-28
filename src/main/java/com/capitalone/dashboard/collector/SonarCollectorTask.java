@@ -131,8 +131,10 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private String getToken(List<String> tokens,int index){
         if(CollectionUtils.isEmpty(tokens)) return null;
         if (CollectionUtils.isNotEmpty(tokens)){
-            return tokens.get(index);
-        }
+           if(tokens.size()>index){
+                return tokens.get(index);
+            }
+          }
         return null;
     }
 	/**
