@@ -32,8 +32,8 @@ notifications:
     on_start: always
   email:
     recipients:
-      #- tapabrata.pal@capitalone.com
+      - tapabrata.pal@capitalone.com
       - ragha.vema@capitalone.com
-      #- hygieia2@capitalone.com
+      - hygieia2@capitalone.com
     on_success: always
     on_failure: always
