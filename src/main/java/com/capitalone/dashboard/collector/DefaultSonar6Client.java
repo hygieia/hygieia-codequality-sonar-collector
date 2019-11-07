@@ -1,10 +1,13 @@
 package com.capitalone.dashboard.collector;
 
+import com.capitalone.dashboard.client.RestClient;
+import com.capitalone.dashboard.client.RestUserInfo;
 import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.CodeQualityMetric;
 import com.capitalone.dashboard.model.CodeQualityMetricStatus;
 import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.model.SonarProject;
+import com.capitalone.dashboard.model.UserInfo;
 import com.capitalone.dashboard.util.SonarDashboardUrl;
 import com.capitalone.dashboard.util.Supplier;
 import org.apache.commons.codec.binary.Base64;
@@ -30,12 +33,13 @@ import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class DefaultSonar6Client implements SonarClient {
     private static final Log LOG = LogFactory.getLog(DefaultSonar6Client.class);
-
     private static final String URL_RESOURCES = "/api/components/search?qualifiers=TRK&ps=500";
+    private static final String URL_RESOURCES_AUTHENTICATED = "/api/projects/search?ps=500";
     private static final String URL_RESOURCE_DETAILS = "/api/measures/component?format=json&componentId=%s&metricKeys=%s&includealerts=true";
     private static final String URL_PROJECT_ANALYSES = "/api/project_analyses/search?project=%s";
     private static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
@@ -56,8 +60,8 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String DATE = "date";
     private static final String EVENTS = "events";
 
-    private final RestOperations rest;
-    private final HttpEntity<String> httpHeaders;
+    private final RestClient restClient;
+    private final RestUserInfo userInfo;
 
     private static final String MINUTES_FORMAT = "%smin";
     private static final String HOURS_FORMAT = "%sh";
@@ -66,21 +70,30 @@ public class DefaultSonar6Client implements SonarClient {
     private static final int PAGE_SIZE=500;
 
     @Autowired
-    public DefaultSonar6Client(Supplier<RestOperations> restOperationsSupplier, SonarSettings settings) {
-        this.httpHeaders = new HttpEntity<>(
-                this.createHeaders(settings.getUsername(), settings.getPassword())
-        );
-        this.rest = restOperationsSupplier.get();
+    public DefaultSonar6Client(RestClient restClient, SonarSettings settings) {
+        if(StringUtils.isEmpty(settings.getUsername())|| StringUtils.isEmpty(settings.getPassword())){
+            this.userInfo= new RestUserInfo("","");
+        }else{
+            this.userInfo = new RestUserInfo(settings.getUsername(),settings.getPassword());
+        }
+
+        this.restClient = restClient;
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl) {
+    public List<SonarProject> getProjects(String instanceUrl,String token) {
         List<SonarProject> projects = new ArrayList<>();
-        String url = instanceUrl + URL_RESOURCES;
+        String url = "";
+        // take authenticated route
+        if(Objects.nonNull(token)){
+            url = instanceUrl +  URL_RESOURCES_AUTHENTICATED;
+            userInfo.setToken(token);
+        }else{
+            url = instanceUrl + URL_RESOURCES;
+        }
 
         try {
-            String key = "components";
-            JSONArray jsonArray = getProjects(url, key);
+            JSONArray jsonArray = getProjects(url);
             for (Object obj : jsonArray) {
                 JSONObject prjData = (JSONObject) obj;
 
@@ -100,7 +113,8 @@ public class DefaultSonar6Client implements SonarClient {
         return projects;
     }
 
-    private JSONArray getProjects(String url, String key) throws ParseException {
+    private JSONArray getProjects(String url) throws ParseException {
+        String key = "components";
         Long totalRecords = getTotalCount(parseJsonObject(url, "paging"));
         int pages = (int) Math.ceil((double)totalRecords / PAGE_SIZE);
         JSONArray jsonArray = new JSONArray();
@@ -114,14 +128,24 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     private JSONArray getProjects(String url, String key, int pages, JSONArray jsonArray) throws ParseException {
+        if(Objects.isNull(userInfo.getToken())){
+            pagingUnAuthenticated(url, key, pages, jsonArray);
+        }else{
+            for (int start=1;start<=pages;start++){
+                getProjects(url, key, jsonArray, start);
+            }
+        }
+        return  jsonArray;
+    }
+
+    private void pagingUnAuthenticated(String url, String key, int pages, JSONArray jsonArray) throws ParseException {
         int maxPages = 20;
         if(pages <= maxPages) {
             maxPages = pages;
         }
-       for (int start=1;start<=maxPages;start++){
+        for (int start=1;start<=maxPages;start++){
             getProjects(url, key, jsonArray, start);
         }
-        return  jsonArray;
     }
 
     private void getProjects(String url, String key, JSONArray jsonArray, int pageNumber) throws ParseException {
@@ -135,7 +159,7 @@ public class DefaultSonar6Client implements SonarClient {
                 project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), metrics);
 
         try {
-            ResponseEntity<String> response = rest.exchange(url, HttpMethod.GET, this.httpHeaders, String.class);
+            ResponseEntity<String> response = restClient.makeRestCallGet(url,setHeaders(userInfo) );
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
             String key = "component";
@@ -258,7 +282,7 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     private JSONObject getResponse(String url) throws ParseException {
-        ResponseEntity<String> response = rest.exchange(url, HttpMethod.GET, this.httpHeaders, String.class);
+        ResponseEntity<String> response = restClient.makeRestCallGet(url, setHeaders(userInfo));
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
         LOG.debug(url);
@@ -366,6 +390,10 @@ public class DefaultSonar6Client implements SonarClient {
         }
     }
 
+    private Long getTotalCount(JSONObject pagingObject) {
+        return (Long) pagingObject.get("total");
+    }
+
     private HttpHeaders createHeaders(String username, String password){
         HttpHeaders headers = new HttpHeaders();
         if (username != null && !username.isEmpty()) {
@@ -379,8 +407,27 @@ public class DefaultSonar6Client implements SonarClient {
         return headers;
     }
 
-    private Long getTotalCount(JSONObject pagingObject) {
-        return (Long) pagingObject.get("total");
+    private HttpHeaders createHeaders(String token) {
+        String auth = token.trim();
+        auth = auth+":";
+        byte[] encodedAuth = Base64.encodeBase64(
+                auth.getBytes(Charset.forName("US-ASCII"))
+        );
+        String authHeader = "Basic " + new String(encodedAuth);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", authHeader);
+        return headers;
     }
+
+    private HttpHeaders setHeaders(RestUserInfo userInfo){
+        if(Objects.isNull(userInfo)) return null;
+        if(StringUtils.isNotBlank(userInfo.getUserId())&& StringUtils.isNotBlank(userInfo.getPassCode())){
+            return createHeaders(userInfo.getUserId(),userInfo.getPassCode());
+        }else if(StringUtils.isNotBlank(userInfo.getToken())){
+            return createHeaders(userInfo.getToken());
+        }
+        return null;
+    }
+
 
 }
