@@ -1,12 +1,13 @@
 package com.capitalone.dashboard.collector;
 
+import com.capitalone.dashboard.client.RestClient;
+import com.capitalone.dashboard.client.RestUserInfo;
 import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.CodeQualityMetric;
 import com.capitalone.dashboard.model.CodeQualityMetricStatus;
 import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.model.SonarProject;
 import com.capitalone.dashboard.util.SonarDashboardUrl;
-import com.capitalone.dashboard.util.Supplier;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,13 +18,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestOperations;
 
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
@@ -55,19 +53,17 @@ public class DefaultSonarClient implements SonarClient {
     protected static final String STATUS_ALERT = "ALERT";
     protected static final String DATE = "date";
 
-    protected final RestOperations rest;
-    protected final HttpEntity<String> httpHeaders;
+    protected final RestClient restClient;
+    protected final RestUserInfo userInfo;
 
     @Autowired
-    public DefaultSonarClient(Supplier<RestOperations> restOperationsSupplier, SonarSettings settings) {
-        this.httpHeaders = new HttpEntity<>(
-                this.createHeaders(settings.getUsername(), settings.getPassword())
-            );
-        this.rest = restOperationsSupplier.get();
+    public DefaultSonarClient(RestClient restClient, SonarSettings settings) {
+        userInfo = settings.getUsername()==null?null:new RestUserInfo(settings.getUsername(), settings.getPassword());
+        this.restClient = restClient;
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl) {
+    public List<SonarProject> getProjects(String instanceUrl,String token) {
         List<SonarProject> projects = new ArrayList<>();
         String url = instanceUrl + URL_RESOURCES;
 
@@ -186,12 +182,12 @@ public class DefaultSonarClient implements SonarClient {
    }
 
     protected JSONArray parseAsArray(String url) throws ParseException {
-        ResponseEntity<String> response = rest.exchange(url, HttpMethod.GET, this.httpHeaders, String.class);
+        ResponseEntity<String> response = restClient.makeRestCallGet(url, this.userInfo);
         return (JSONArray) new JSONParser().parse(response.getBody());
     }
 
     protected JSONArray parseAsArray(String url, String key) throws ParseException {
-        ResponseEntity<String> response = rest.exchange(url, HttpMethod.GET, this.httpHeaders, String.class);
+        ResponseEntity<String> response = restClient.makeRestCallGet(url, this.userInfo);
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
         LOG.debug(url);
@@ -244,17 +240,4 @@ public class DefaultSonarClient implements SonarClient {
         }
     }
 
-    private final HttpHeaders createHeaders(String username, String password){
-        HttpHeaders headers = new HttpHeaders();
-        if (username != null && !username.isEmpty() &&
-            password != null && !password.isEmpty()) {
-          String auth = username + ":" + password;
-          byte[] encodedAuth = Base64.encodeBase64(
-              auth.getBytes(Charset.forName("US-ASCII"))
-          );
-          String authHeader = "Basic " + new String(encodedAuth);
-          headers.set("Authorization", authHeader);
-        }
-        return headers;
-    }
 }
