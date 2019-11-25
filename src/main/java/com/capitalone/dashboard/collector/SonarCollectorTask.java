@@ -238,7 +238,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
         log("Updated", start, count);
     }
-
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
     	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);   
     	JSONArray sonarProfileConfigurationChanges = new JSONArray();
