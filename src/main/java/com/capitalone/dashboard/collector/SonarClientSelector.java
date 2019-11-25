@@ -42,7 +42,7 @@ public class SonarClientSelector {
     }
     
     public Double getSonarVersion(String instanceUrl){
-    	Double version = 6.0;
+    	Double version = 5.0;
     	try {
     	    ResponseEntity<String> versionResponse = rest.exchange(URI.create(instanceUrl + URL_VERSION_RESOURCE), HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), String.class);
     	    if(!versionResponse.getBody().isEmpty()) {
