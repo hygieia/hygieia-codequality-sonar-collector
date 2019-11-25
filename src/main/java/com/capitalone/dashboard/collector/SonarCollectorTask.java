@@ -35,10 +35,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component
 public class SonarCollectorTask extends CollectorTask<SonarCollector> {
-    @SuppressWarnings({ "PMD.UnusedPrivateField", "unused" })
+
     private static final Log LOG = LogFactory.getLog(SonarCollectorTask.class);
 
     private final SonarCollectorRepository sonarCollectorRepository;
@@ -68,12 +70,12 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         this.sonarSettings = sonarSettings;
         this.sonarClientSelector = sonarClientSelector;
         this.dbComponentRepository = dbComponentRepository;
-        this.configurationRepository = configurationRepository;  
+        this.configurationRepository = configurationRepository;
     }
 
     @Override
     public SonarCollector getCollector() {
-        
+
         Configuration config = configurationRepository.findByCollectorName("Sonar");
         // Only use Admin Page server configuration when available
         // otherwise use properties file server configuration
@@ -90,7 +92,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 sonarSettings.getPasswords().add(sonarServer.get("password"));
             }
         }
-        
+
         return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getVersions(), sonarSettings.getMetrics(), sonarSettings.getNiceNames());
     }
 
@@ -119,17 +121,18 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             for (int i = 0; i < collector.getSonarServers().size(); i++) {
 
                 String instanceUrl = collector.getSonarServers().get(i);
-                logBanner(instanceUrl);                
+                logBanner(instanceUrl);
 
                 String username = sonarSettings.getUsernames().get(i);
                 String password = sonarSettings.getPasswords().get(i);
                 Double version = collector.getSonarVersions().get(i);
                 String metrics = collector.getSonarMetrics().get(i);
+                String token = getToken(sonarSettings.getTokens(),i);
 
                 SonarClient sonarClient = sonarClientSelector.getSonarClient(version);
                 sonarClient.setServerDetails(username, password);
 
-                List<SonarProject> projects = sonarClient.getProjects(instanceUrl);
+                List<SonarProject> projects = sonarClient.getProjects(instanceUrl,token);
                 latestProjects.addAll(projects);
 
                 int projSize = ((CollectionUtils.isEmpty(projects)) ? 0 : projects.size());
@@ -154,30 +157,37 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         deleteUnwantedJobs(latestProjects, existingProjects, collector);
     }
 
+
+    private String getToken(List<String> tokens,int index){
+        if(CollectionUtils.isEmpty(tokens)) return null;
+        if (CollectionUtils.isNotEmpty(tokens)){
+           if(tokens.size()>index){
+                return tokens.get(index);
+            }
+          }
+        return null;
+    }
 	/**
 	 * Clean up unused sonar collector items
 	 *
 	 * @param collector
 	 *            the {@link SonarCollector}
 	 */
-
-    @SuppressWarnings("PMD.AvoidDeeplyNestedIfStmts") // agreed PMD, fixme
     private void clean(SonarCollector collector, List<SonarProject> existingProjects) {
-        Set<ObjectId> uniqueIDs = new HashSet<>();
-        for (com.capitalone.dashboard.model.Component comp : dbComponentRepository
-                .findAll()) {
-            if (comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty()) {
-                List<CollectorItem> itemList = comp.getCollectorItems().get(
-                        CollectorType.CodeQuality);
-                if (itemList != null) {
-                    for (CollectorItem ci : itemList) {
-                        if (ci != null && ci.getCollectorId().equals(collector.getId())) {
-                            uniqueIDs.add(ci.getId());
-                        }
-                    }
-                }
-            }
-        }
+        // extract unique collector item IDs from components
+        // (in this context collector_items are sonar projects)
+        Set<ObjectId> uniqueIDs = StreamSupport.stream(dbComponentRepository.findAll().spliterator(),false)
+            .filter( comp -> comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty())
+            .map(comp -> comp.getCollectorItems().get(CollectorType.CodeQuality))
+            // keep nonNull List<CollectorItem>
+            .filter(itemList -> itemList != null )
+            // merge all lists (flatten) into a stream
+            .flatMap(List::stream)
+            // keep nonNull CollectorItems
+            .filter(ci -> ci != null && ci.getCollectorId().equals(collector.getId()))
+            .map(CollectorItem::getId)
+            .collect(Collectors.toSet());
+
         List<SonarProject> stateChangeJobList = new ArrayList<>();
         Set<ObjectId> udId = new HashSet<>();
         udId.add(collector.getId());
@@ -228,8 +238,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
         log("Updated", start, count);
     }
-    
-    @SuppressWarnings("PMD.AvoidDeeplyNestedIfStmts")
+
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
     	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);   
     	JSONArray sonarProfileConfigurationChanges = new JSONArray();

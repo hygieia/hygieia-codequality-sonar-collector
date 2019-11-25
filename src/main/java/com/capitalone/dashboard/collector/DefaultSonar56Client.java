@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.collector;
 
+import com.capitalone.dashboard.client.RestClient;
 import com.capitalone.dashboard.model.SonarProject;
 import com.capitalone.dashboard.util.Supplier;
 import org.apache.commons.logging.Log;
@@ -21,12 +22,12 @@ public class DefaultSonar56Client extends DefaultSonarClient {
     private static final String URL_PROJECTS = "/api/projects?format=json";
 
     @Autowired
-    public DefaultSonar56Client(Supplier<RestOperations> restOperationsSupplier) {
-        super(restOperationsSupplier);
+    public DefaultSonar56Client(RestClient restClient) {
+      super(restClient);
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl) {
+    public List<SonarProject> getProjects(String instanceUrl,String token) {
         List<SonarProject> projects = new ArrayList<>();
         String url = instanceUrl + URL_PROJECTS;
         try {

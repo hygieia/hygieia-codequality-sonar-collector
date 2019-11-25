@@ -19,6 +19,7 @@ public class SonarSettings {
     private List<Double> versions;
     private List<String> metrics;
     private List<String> niceNames;
+    private List<String> tokens;
 
     public String getCron() {
         return cron;
@@ -74,6 +75,14 @@ public class SonarSettings {
 
     public void setNiceNames(List<String> niceNames) {
         this.niceNames = niceNames;
+    }
+
+    public List<String> getTokens() {
+        return tokens;
+    }
+
+    public void setTokens(List<String> tokens) {
+        this.tokens = tokens;
     }
 
 }
