@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.collector;
 
+import com.capitalone.dashboard.client.RestClient;
 import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.model.SonarProject;
@@ -48,7 +49,7 @@ public class DefaultSonar6ClientTest {
     public void init() {
         when(restOperationsSupplier.get()).thenReturn(rest);
         settings = new SonarSettings();
-        defaultSonar6Client = new DefaultSonar6Client(restOperationsSupplier, settings);
+        defaultSonar6Client = new DefaultSonar6Client(new RestClient(restOperationsSupplier), settings);
     }
 
     @Test
@@ -56,7 +57,7 @@ public class DefaultSonar6ClientTest {
         String projectJson = getJson("sonar6projects.json");
         String projectsUrl = SONAR_URL + URL_RESOURCES;
         doReturn(new ResponseEntity<>(projectJson, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        List<SonarProject> projects = defaultSonar6Client.getProjects(SONAR_URL);
+        List<SonarProject> projects = defaultSonar6Client.getProjects(SONAR_URL,null);
         assertThat(projects.size(), is(2));
         assertThat(projects.get(0).getProjectName(), is("com.capitalone.test:TestProject"));
         assertThat(projects.get(1).getProjectName(), is("com.capitalone.test:AnotherTestProject"));
@@ -81,7 +82,7 @@ public class DefaultSonar6ClientTest {
         doReturn(new ResponseEntity<>(projectJson1500, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl3), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
         doReturn(new ResponseEntity<>(projectJson2000, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl4), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
 
-        List<SonarProject> projects = defaultSonar6Client.getProjects(SONAR_URL);
+        List<SonarProject> projects = defaultSonar6Client.getProjects(SONAR_URL,null);
         assertThat(projects.size(), is(2000));
     }
 
