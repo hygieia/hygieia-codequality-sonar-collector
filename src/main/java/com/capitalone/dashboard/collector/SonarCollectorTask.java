@@ -70,7 +70,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
     @Override
     public SonarCollector getCollector() {
-        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getVersions(),sonarSettings.getNiceNames());
+        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getNiceNames());
     }
 
     @Override
@@ -98,7 +98,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             for (int i = 0; i < collector.getSonarServers().size(); i++) {
 
                 String instanceUrl = collector.getSonarServers().get(i);
-                Double version = collector.getSonarVersions().get(i);
+                Double version = sonarClientSelector.getSonarVersion(instanceUrl);
                 String token = getToken(sonarSettings.getTokens(),i);
 
                 logBanner(instanceUrl);
