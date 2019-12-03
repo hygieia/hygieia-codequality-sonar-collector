@@ -15,9 +15,9 @@ public class SonarSettings {
     private String username;
     private String password;
     private List<String> servers;
-    private List<Double> versions;
     private List<String> metrics;
     private List<String> niceNames;
+    private List<String> tokens;
 
     public String getCron() {
         return cron;
@@ -59,20 +59,20 @@ public class SonarSettings {
         this.servers = servers;
     }
 
-    public List<Double> getVersions() {
-        return versions;
-    }
-
-    public void setVersions(List<Double> versions) {
-        this.versions = versions;
-    }
-
     public List<String> getNiceNames() {
         return niceNames;
     }
 
     public void setNiceNames(List<String> niceNames) {
         this.niceNames = niceNames;
+    }
+
+    public List<String> getTokens() {
+        return tokens;
+    }
+
+    public void setTokens(List<String> tokens) {
+        this.tokens = tokens;
     }
 
 }
