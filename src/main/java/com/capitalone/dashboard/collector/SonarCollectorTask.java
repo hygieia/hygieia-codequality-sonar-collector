@@ -93,7 +93,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             }
         }
 
-        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getVersions(), sonarSettings.getMetrics(), sonarSettings.getNiceNames());
+        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getMetrics(), sonarSettings.getNiceNames());
     }
 
     @Override
@@ -125,7 +125,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
                 String username = sonarSettings.getUsernames().get(i);
                 String password = sonarSettings.getPasswords().get(i);
-                Double version = collector.getSonarVersions().get(i);
+                Double version = sonarClientSelector.getSonarVersion(instanceUrl);
                 String metrics = collector.getSonarMetrics().get(i);
                 String token = getToken(sonarSettings.getTokens(),i);
 

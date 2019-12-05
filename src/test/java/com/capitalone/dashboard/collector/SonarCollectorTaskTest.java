@@ -19,7 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.OngoingStubbing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +36,6 @@ public class SonarCollectorTaskTest {
     @Mock private SonarProjectRepository sonarProjectRepository;
     @Mock private CodeQualityRepository codeQualityRepository;
     @Mock private SonarProfileRepostory sonarProfileRepostory;
- 
 
     @Mock private SonarSettings sonarSettings;
     @Mock private ComponentRepository dbComponentRepository;
@@ -82,7 +80,6 @@ public class SonarCollectorTaskTest {
 
     	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE);                                                 
     	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE);
-    	
     }
 
     @Test
@@ -95,36 +92,41 @@ public class SonarCollectorTaskTest {
     @Test
     public void collectOneServer43() throws Exception {
     	when(dbComponentRepository.findAll()).thenReturn(components());
+        when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION43);
         when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1));
         when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("bob"));
         when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("matrix"));
 
         when(sonarClientSelector.getSonarClient(VERSION43)).thenReturn(defaultSonarClient);
-        task.collect(collectorWithOneServer(VERSION43));
-        verify(sonarClientSelector).getSonarClient(VERSION43);
 
+        task.collect(collectorWithOneServer());
+
+        verify(sonarClientSelector).getSonarClient(VERSION43);
     }
 
     @Test
     public void collectOneServer54() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
+        when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION54);
 
         when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1));
         when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("robert"));
         when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("k"));
 
         when(sonarClientSelector.getSonarClient(VERSION54)).thenReturn(defaultSonar6Client);
-        task.collect(collectorWithOneServer(VERSION54));
+
+        task.collect(collectorWithOneServer());
+
         verify(sonarClientSelector).getSonarClient(VERSION54);
         verify(defaultSonar6Client).getQualityProfiles(SERVER1);
         verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
         verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE);
     }
 
-
     @Test
     public void collectOneServer63() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
+        when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION63);
 
         when(sonarSettings.getServers())
             .thenReturn(Arrays.asList(SERVER1))
@@ -133,23 +135,28 @@ public class SonarCollectorTaskTest {
         when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("4kkpt"));
 
         when(sonarClientSelector.getSonarClient(VERSION63)).thenReturn(defaultSonar6Client);
-        task.collect(collectorWithOneServer(VERSION63));
+
+        task.collect(collectorWithOneServer());
+
         verify(sonarClientSelector).getSonarClient(VERSION63);
         verify(defaultSonar6Client).getQualityProfiles(SERVER1);
         verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
         verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE);
     }
 
-
     @Test
     public void collectTwoServer43And54() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
+        when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION43);
+        when(sonarClientSelector.getSonarVersion(SERVER2)).thenReturn(VERSION54);
         when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1, SERVER2));
         when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("bob", "bob"));
         when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("k", "l"));
         when(sonarClientSelector.getSonarClient(VERSION54)).thenReturn(defaultSonar6Client);
         when(sonarClientSelector.getSonarClient(VERSION43)).thenReturn(defaultSonarClient);
-        task.collect(collectorWithOnTwoServers(VERSION43, VERSION54));
+
+        task.collect(collectorWithOnTwoServers());
+
         verify(sonarClientSelector).getSonarClient(VERSION43);
         verify(sonarClientSelector).getSonarClient(VERSION54);
         
@@ -169,12 +176,12 @@ public class SonarCollectorTaskTest {
         return cArray;
     }
 
-    private SonarCollector collectorWithOneServer(Double version) {
-        return SonarCollector.prototype(Collections.singletonList(SERVER1), Collections.singletonList(version), Collections.singletonList(METRICS1),Collections.singletonList(NICENAME1));
+    private SonarCollector collectorWithOneServer() {
+        return SonarCollector.prototype(Collections.singletonList(SERVER1), Collections.singletonList(METRICS1),Collections.singletonList(NICENAME1));
     }
 
-    private SonarCollector collectorWithOnTwoServers(Double version1, Double version2) {
-        return SonarCollector.prototype(Arrays.asList(SERVER1, SERVER2), Arrays.asList(version1, version2), Arrays.asList(METRICS1,METRICS2),Arrays.asList(NICENAME1,NICENAME2));
+    private SonarCollector collectorWithOnTwoServers() {
+        return SonarCollector.prototype(Arrays.asList(SERVER1, SERVER2), Arrays.asList(METRICS1,METRICS2),Arrays.asList(NICENAME1,NICENAME2));
     }
 
 }

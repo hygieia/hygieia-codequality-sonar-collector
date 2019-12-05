@@ -16,7 +16,6 @@ public class SonarSettings {
     private List<String> usernames = new ArrayList<>();
     private List<String> passwords = new ArrayList<>();
     private List<String> servers = new ArrayList<>();
-    private List<Double> versions;
     private List<String> metrics;
     private List<String> niceNames;
     private List<String> tokens;
@@ -59,14 +58,6 @@ public class SonarSettings {
 
     public void setServers(List<String> servers) {
         this.servers = servers;
-    }
-
-    public List<Double> getVersions() {
-        return versions;
-    }
-
-    public void setVersions(List<Double> versions) {
-        this.versions = versions;
     }
 
     public List<String> getNiceNames() {
