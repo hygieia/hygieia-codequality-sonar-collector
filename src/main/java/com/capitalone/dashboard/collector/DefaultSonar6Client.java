@@ -7,9 +7,7 @@ import com.capitalone.dashboard.model.CodeQualityMetric;
 import com.capitalone.dashboard.model.CodeQualityMetricStatus;
 import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.model.SonarProject;
-import com.capitalone.dashboard.model.UserInfo;
 import com.capitalone.dashboard.util.SonarDashboardUrl;
-import com.capitalone.dashboard.util.Supplier;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,13 +18,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestOperations;
 
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
@@ -45,7 +40,7 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     private static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     private static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
-    private static final String METRICS = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
+    private static String metrics = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static final String ID = "id";
     private static final String NAME = "name";
@@ -76,6 +71,11 @@ public class DefaultSonar6Client implements SonarClient {
         }
 
         this.restClient = restClient;
+
+        // override default sonar metrics to fetch via properties file settings
+        if (!StringUtils.isEmpty(settings.getMetrics63andAbove())) {
+            metrics = settings.getMetrics63andAbove();
+        }
     }
 
     @Override
@@ -154,7 +154,7 @@ public class DefaultSonar6Client implements SonarClient {
     @Override
     public CodeQuality currentCodeQuality(SonarProject project) {
         String url = String.format(
-                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), METRICS);
+                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), metrics);
 
         try {
             ResponseEntity<String> response = restClient.makeRestCallGet(url,setHeaders(userInfo) );

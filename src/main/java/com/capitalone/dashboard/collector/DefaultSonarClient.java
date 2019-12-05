@@ -8,7 +8,6 @@ import com.capitalone.dashboard.model.CodeQualityMetricStatus;
 import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.model.SonarProject;
 import com.capitalone.dashboard.util.SonarDashboardUrl;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -18,13 +17,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +35,7 @@ public class DefaultSonarClient implements SonarClient {
     protected static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     protected static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     protected static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
-    protected static final String METRICS = "ncloc,line_coverage,violations,critical_violations,major_violations,blocker_violations,violations_density,sqale_index,test_success_density,test_failures,test_errors,tests";
+    protected static String metrics = "ncloc,line_coverage,violations,critical_violations,major_violations,blocker_violations,violations_density,sqale_index,test_success_density,test_failures,test_errors,tests";
 
     protected static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     protected static final String ID = "id";
@@ -61,6 +58,10 @@ public class DefaultSonarClient implements SonarClient {
     public DefaultSonarClient(RestClient restClient, SonarSettings settings) {
         userInfo = settings.getUsername()==null?null:new RestUserInfo(settings.getUsername(), settings.getPassword());
         this.restClient = restClient;
+
+        if (!StringUtils.isEmpty(settings.getMetricsBefore63())) {
+            metrics = settings.getMetricsBefore63();
+        }
     }
 
     @Override
@@ -93,7 +94,7 @@ public class DefaultSonarClient implements SonarClient {
     @Override
     public CodeQuality currentCodeQuality(SonarProject project) {
         String url = String.format(
-                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), METRICS);
+                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), metrics);
 
         try {
             JSONArray jsonArray = parseAsArray(url);

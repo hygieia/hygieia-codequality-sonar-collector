@@ -17,6 +17,8 @@ public class SonarSettings {
     private List<String> servers;
     private List<String> niceNames;
     private List<String> tokens;
+    private String metrics63andAbove; // 6.3 is the sonar version
+    private String metricsBefore63;
 
     public String getCron() {
         return cron;
@@ -66,4 +68,19 @@ public class SonarSettings {
         this.tokens = tokens;
     }
 
+    public String getMetrics63andAbove() {
+        return metrics63andAbove;
+    }
+
+    public void setMetrics63andAbove(String metrics63andAbove) {
+        this.metrics63andAbove = metrics63andAbove;
+    }
+
+    public String getMetricsBefore63() {
+        return metricsBefore63;
+    }
+
+    public void setMetricsBefore63(String metricsBefore63) {
+        this.metricsBefore63 = metricsBefore63;
+    }
 }
