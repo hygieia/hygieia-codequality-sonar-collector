@@ -30,6 +30,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -214,7 +215,28 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             if (!collector.getSonarServers().contains(job.getInstanceUrl()) ||
                     (!job.getCollectorId().equals(collector.getId())) ||
                     (!latestProjects.contains(job))) {
-                deleteJobList.add(job);
+                if(!job.isEnabled()) {
+                    LOG.debug("drop deleted sonar project which is disabled "+job.getProjectName());
+                    deleteJobList.add(job);
+                } else {
+                    LOG.debug("drop deleted sonar project which is enabled "+job.getProjectName());
+                    // CollectorItem should be removed from components and dashboards first
+                    // then the CollectorItem (sonar proj in this case) can be deleted
+
+                    List<com.capitalone.dashboard.model.Component> comps = dbComponentRepository
+                        .findByCollectorTypeAndItemIdIn(CollectorType.CodeQuality, Arrays.asList(job.getId()));
+
+                    for (com.capitalone.dashboard.model.Component c: comps) {
+                        c.getCollectorItems().remove(CollectorType.CodeQuality);
+                    }
+                    dbComponentRepository.save(comps);
+                    
+                    // other collectors also delete the widget but not here
+                    // should not remove the code analysis widget
+                    // because it is shared by other collectors
+
+                    deleteJobList.add(job);
+                }
             }
         }
         if (!CollectionUtils.isEmpty(deleteJobList)) {
