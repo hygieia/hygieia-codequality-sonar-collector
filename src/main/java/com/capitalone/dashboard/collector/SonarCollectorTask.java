@@ -71,7 +71,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
     @Override
     public SonarCollector getCollector() {
-        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getMetrics(),sonarSettings.getNiceNames());
+        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getNiceNames());
     }
 
     @Override
@@ -100,7 +100,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
                 String instanceUrl = collector.getSonarServers().get(i);
                 Double version = sonarClientSelector.getSonarVersion(instanceUrl);
-                String metrics = collector.getSonarMetrics().get(i);
                 String token = getToken(sonarSettings.getTokens(),i);
 
                 logBanner(instanceUrl);
@@ -113,7 +112,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
                 addNewProjects(projects, existingProjects, collector);
 
-                refreshData(enabledProjects(collector, instanceUrl), sonarClient,metrics);
+                refreshData(enabledProjects(collector, instanceUrl), sonarClient);
                 
                 // Changelog apis do not exist for sonarqube versions under version 5.0
                 if (version >= 5.0) {
@@ -216,12 +215,12 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
     }
 
-    private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient, String metrics) {
+    private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient) {
         long start = System.currentTimeMillis();
         int count = 0;
 
         for (SonarProject project : sonarProjects) {
-            CodeQuality codeQuality = sonarClient.currentCodeQuality(project, metrics);
+            CodeQuality codeQuality = sonarClient.currentCodeQuality(project);
             if (codeQuality != null && isNewQualityData(project, codeQuality)) {
                 project.setLastUpdated(System.currentTimeMillis());
                 sonarProjectRepository.save(project);
@@ -232,7 +231,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
         log("Updated", start, count);
     }
-    
+
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
     	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);   
     	JSONArray sonarProfileConfigurationChanges = new JSONArray();
@@ -250,7 +249,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     }
     
     private void addNewConfigurationChanges(SonarCollector collector,JSONArray sonarProfileConfigurationChanges){
-    	ArrayList<CollectorItemConfigHistory> profileConfigChanges = new ArrayList();
+    	ArrayList<CollectorItemConfigHistory> profileConfigChanges = new ArrayList<>();
     	
     	for (Object configChange : sonarProfileConfigurationChanges) {		
     		JSONObject configChangeJson = (JSONObject) configChange;
