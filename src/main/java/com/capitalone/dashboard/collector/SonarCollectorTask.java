@@ -30,6 +30,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -93,7 +94,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             }
         }
 
-        return SonarCollector.prototype(sonarSettings.getServers(), sonarSettings.getMetrics(), sonarSettings.getNiceNames());
+        return SonarCollector.prototype(sonarSettings.getServers(),  sonarSettings.getNiceNames());
     }
 
     @Override
@@ -126,7 +127,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 String username = sonarSettings.getUsernames().get(i);
                 String password = sonarSettings.getPasswords().get(i);
                 Double version = sonarClientSelector.getSonarVersion(instanceUrl);
-                String metrics = collector.getSonarMetrics().get(i);
                 String token = getToken(sonarSettings.getTokens(),i);
 
                 SonarClient sonarClient = sonarClientSelector.getSonarClient(version);
@@ -140,7 +140,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
                 addNewProjects(projects, existingProjects, collector);
 
-                refreshData(enabledProjects(collector, instanceUrl), sonarClient,metrics);
+                refreshData(enabledProjects(collector, instanceUrl), sonarClient);
                 
                 // Changelog apis do not exist for sonarqube versions under version 5.0
                 if (version >= 5.0) {
@@ -214,7 +214,28 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             if (!collector.getSonarServers().contains(job.getInstanceUrl()) ||
                     (!job.getCollectorId().equals(collector.getId())) ||
                     (!latestProjects.contains(job))) {
-                deleteJobList.add(job);
+                if(!job.isEnabled()) {
+                    LOG.debug("drop deleted sonar project which is disabled "+job.getProjectName());
+                    deleteJobList.add(job);
+                } else {
+                    LOG.debug("drop deleted sonar project which is enabled "+job.getProjectName());
+                    // CollectorItem should be removed from components and dashboards first
+                    // then the CollectorItem (sonar proj in this case) can be deleted
+
+                    List<com.capitalone.dashboard.model.Component> comps = dbComponentRepository
+                        .findByCollectorTypeAndItemIdIn(CollectorType.CodeQuality, Arrays.asList(job.getId()));
+
+                    for (com.capitalone.dashboard.model.Component c: comps) {
+                        c.getCollectorItems().remove(CollectorType.CodeQuality);
+                    }
+                    dbComponentRepository.save(comps);
+
+                    // other collectors also delete the widget but not here
+                    // should not remove the code analysis widget
+                    // because it is shared by other collectors
+
+                    deleteJobList.add(job);
+                }
             }
         }
         if (!CollectionUtils.isEmpty(deleteJobList)) {
@@ -222,12 +243,12 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
     }
 
-    private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient, String metrics) {
+    private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient) {
         long start = System.currentTimeMillis();
         int count = 0;
 
         for (SonarProject project : sonarProjects) {
-            CodeQuality codeQuality = sonarClient.currentCodeQuality(project, metrics);
+            CodeQuality codeQuality = sonarClient.currentCodeQuality(project);
             if (codeQuality != null && isNewQualityData(project, codeQuality)) {
                 project.setLastUpdated(System.currentTimeMillis());
                 sonarProjectRepository.save(project);
@@ -238,6 +259,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
         log("Updated", start, count);
     }
+
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
     	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);   
     	JSONArray sonarProfileConfigurationChanges = new JSONArray();
@@ -255,7 +277,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     }
     
     private void addNewConfigurationChanges(SonarCollector collector,JSONArray sonarProfileConfigurationChanges){
-    	ArrayList<CollectorItemConfigHistory> profileConfigChanges = new ArrayList();
+    	ArrayList<CollectorItemConfigHistory> profileConfigChanges = new ArrayList<>();
     	
     	for (Object configChange : sonarProfileConfigurationChanges) {		
     		JSONObject configChangeJson = (JSONObject) configChange;
