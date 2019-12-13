@@ -29,13 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -80,12 +74,12 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         Configuration config = configurationRepository.findByCollectorName("Sonar");
         // Only use Admin Page server configuration when available
         // otherwise use properties file server configuration
-        if (config != null ) {
+        if (config != null) {
             config.decryptOrEncrptInfo();
             // To clear the username and password from existing run and
             // pick the latest
-            sonarSettings.getUsernames().clear();
             sonarSettings.getServers().clear();
+            sonarSettings.getUsernames().clear();
             sonarSettings.getPasswords().clear();
             for (Map<String, String> sonarServer : config.getInfo()) {
                 sonarSettings.getServers().add(sonarServer.get("url"));
@@ -124,15 +118,15 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 String instanceUrl = collector.getSonarServers().get(i);
                 logBanner(instanceUrl);
 
-                String username = sonarSettings.getUsernames().get(i);
-                String password = sonarSettings.getPasswords().get(i);
                 Double version = sonarClientSelector.getSonarVersion(instanceUrl);
-                String token = getToken(sonarSettings.getTokens(),i);
-
                 SonarClient sonarClient = sonarClientSelector.getSonarClient(version);
-                sonarClient.setServerDetails(username, password);
 
-                List<SonarProject> projects = sonarClient.getProjects(instanceUrl,token);
+                String username = getFromListSafely(sonarSettings.getUsernames(), i);
+                String password = getFromListSafely(sonarSettings.getPasswords(), i);
+                String token = getFromListSafely(sonarSettings.getTokens(), i);
+                sonarClient.setServerCredentials(username, password, token);
+
+                List<SonarProject> projects = sonarClient.getProjects(instanceUrl);
                 latestProjects.addAll(projects);
 
                 int projSize = ((CollectionUtils.isEmpty(projects)) ? 0 : projects.size());
@@ -157,14 +151,12 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         deleteUnwantedJobs(latestProjects, existingProjects, collector);
     }
 
-
-    private String getToken(List<String> tokens,int index){
-        if(CollectionUtils.isEmpty(tokens)) return null;
-        if (CollectionUtils.isNotEmpty(tokens)){
-           if(tokens.size()>index){
-                return tokens.get(index);
-            }
-          }
+    private String getFromListSafely(List<String> ls, int index){
+        if(CollectionUtils.isEmpty(ls)) {
+            return null;
+        } else if (ls.size() > index){
+            return ls.get(index);
+        }
         return null;
     }
 	/**
@@ -180,7 +172,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             .filter( comp -> comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty())
             .map(comp -> comp.getCollectorItems().get(CollectorType.CodeQuality))
             // keep nonNull List<CollectorItem>
-            .filter(itemList -> itemList != null )
+            .filter(Objects::nonNull)
             // merge all lists (flatten) into a stream
             .flatMap(List::stream)
             // keep nonNull CollectorItems
@@ -189,8 +181,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             .collect(Collectors.toSet());
 
         List<SonarProject> stateChangeJobList = new ArrayList<>();
-        Set<ObjectId> udId = new HashSet<>();
-        udId.add(collector.getId());
+
         for (SonarProject job : existingProjects) {
             // collect the jobs that need to change state : enabled vs disabled.
             if ((job.isEnabled() && !uniqueIDs.contains(job.getId())) ||  // if it was enabled but not on a dashboard
@@ -223,7 +214,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     // then the CollectorItem (sonar proj in this case) can be deleted
 
                     List<com.capitalone.dashboard.model.Component> comps = dbComponentRepository
-                        .findByCollectorTypeAndItemIdIn(CollectorType.CodeQuality, Arrays.asList(job.getId()));
+                        .findByCollectorTypeAndItemIdIn(CollectorType.CodeQuality, Collections.singletonList(job.getId()));
 
                     for (com.capitalone.dashboard.model.Component c: comps) {
                         c.getCollectorItems().remove(CollectorType.CodeQuality);
@@ -282,7 +273,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     	for (Object configChange : sonarProfileConfigurationChanges) {		
     		JSONObject configChangeJson = (JSONObject) configChange;
     		CollectorItemConfigHistory profileConfigChange = new CollectorItemConfigHistory();
-    		Map<String,Object> changeMap = new HashMap<String,Object>();
+    		Map<String,Object> changeMap = new HashMap<>();
     		
     		profileConfigChange.setCollectorItemId(collector.getId());
     		profileConfigChange.setUserName((String) configChangeJson.get("authorName"));
@@ -377,9 +368,8 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     	
     	DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
     	DateTime dt = formatter.parseDateTime(date);
-    	long d = new DateTime(dt).getMillis();
-    	
-    	return d;	
+
+        return new DateTime(dt).getMillis();
     }
     
     private ConfigHistOperationType determineConfigChangeOperationType(String changeAction){

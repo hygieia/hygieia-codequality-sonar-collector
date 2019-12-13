@@ -2,7 +2,6 @@ package com.capitalone.dashboard.collector;
 
 import com.capitalone.dashboard.client.RestClient;
 import com.capitalone.dashboard.model.SonarProject;
-import com.capitalone.dashboard.util.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
@@ -10,7 +9,6 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestOperations;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +25,7 @@ public class DefaultSonar56Client extends DefaultSonarClient {
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl,String token) {
+    public List<SonarProject> getProjects(String instanceUrl) {
         List<SonarProject> projects = new ArrayList<>();
         String url = instanceUrl + URL_PROJECTS;
         try {

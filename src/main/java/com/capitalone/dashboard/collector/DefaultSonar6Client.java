@@ -77,28 +77,33 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     @Override
-    public void setServerDetails(String username, String password) {
-        if(StringUtils.isEmpty(username)|| StringUtils.isEmpty(password)){
-            this.userInfo = new RestUserInfo("","");
-        }else{
-            this.userInfo = new RestUserInfo(username,password);
+    public void setServerCredentials(String username, String password, String token) {
+        // use token when given
+        if (StringUtils.isNotBlank(token)) {
+            this.userInfo.setToken(token);
+            this.userInfo.setUserId(null);
+            this.userInfo.setPassCode(null);
+        }
+
+        // but username and password override token
+        if(StringUtils.isNotBlank(username) && StringUtils.isNotBlank(password)){
+            this.userInfo = new RestUserInfo(username, password);
         }
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl,String token) {
+    public List<SonarProject> getProjects(String instanceUrl) {
         List<SonarProject> projects = new ArrayList<>();
         String url = "";
         // take authenticated route
-        if(Objects.nonNull(token)){
+        if(Objects.nonNull(userInfo.getToken())){
             url = instanceUrl +  URL_RESOURCES_AUTHENTICATED;
-            userInfo.setToken(token);
         }else{
             url = instanceUrl + URL_RESOURCES;
         }
 
         try {
-            JSONArray jsonArray = getProjects(url);
+            JSONArray jsonArray = getProjectsWithPaging(url);
             for (Object obj : jsonArray) {
                 JSONObject prjData = (JSONObject) obj;
 
@@ -118,7 +123,7 @@ public class DefaultSonar6Client implements SonarClient {
         return projects;
     }
 
-    private JSONArray getProjects(String url) throws ParseException {
+    private JSONArray getProjectsWithPaging(String url) throws ParseException {
         String key = "components";
         Long totalRecords = getTotalCount(parseJsonObject(url, "paging"));
         int pages = (int) Math.ceil((double)totalRecords / PAGE_SIZE);
