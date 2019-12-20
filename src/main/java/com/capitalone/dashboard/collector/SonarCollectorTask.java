@@ -29,7 +29,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -129,7 +136,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 List<SonarProject> projects = sonarClient.getProjects(instanceUrl);
                 latestProjects.addAll(projects);
 
-                int projSize = ((CollectionUtils.isEmpty(projects)) ? 0 : projects.size());
+                int projSize = CollectionUtils.size(projects);
                 log("Fetched projects   " + projSize, start);
 
                 addNewProjects(projects, existingProjects, collector);
