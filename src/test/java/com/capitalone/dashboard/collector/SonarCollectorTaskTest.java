@@ -93,6 +93,10 @@ public class SonarCollectorTaskTest {
     public void collectOneServer43() throws Exception {
     	when(dbComponentRepository.findAll()).thenReturn(components());
         when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION43);
+        when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("bob"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("matrix"));
+
         when(sonarClientSelector.getSonarClient(VERSION43)).thenReturn(defaultSonarClient);
 
         task.collect(collectorWithOneServer());
@@ -104,6 +108,11 @@ public class SonarCollectorTaskTest {
     public void collectOneServer54() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
         when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION54);
+
+        when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("robert"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("k"));
+
         when(sonarClientSelector.getSonarClient(VERSION54)).thenReturn(defaultSonar6Client);
 
         task.collect(collectorWithOneServer());
@@ -118,6 +127,13 @@ public class SonarCollectorTaskTest {
     public void collectOneServer63() throws Exception {
         when(dbComponentRepository.findAll()).thenReturn(components());
         when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION63);
+
+        when(sonarSettings.getServers())
+            .thenReturn(Arrays.asList(SERVER1))
+            .thenReturn(Arrays.asList(SERVER1));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("yes"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("4kkpt"));
+
         when(sonarClientSelector.getSonarClient(VERSION63)).thenReturn(defaultSonar6Client);
 
         task.collect(collectorWithOneServer());
@@ -133,6 +149,9 @@ public class SonarCollectorTaskTest {
         when(dbComponentRepository.findAll()).thenReturn(components());
         when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION43);
         when(sonarClientSelector.getSonarVersion(SERVER2)).thenReturn(VERSION54);
+        when(sonarSettings.getServers()).thenReturn(Arrays.asList(SERVER1, SERVER2));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("bob", "bob"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("k", "l"));
         when(sonarClientSelector.getSonarClient(VERSION54)).thenReturn(defaultSonar6Client);
         when(sonarClientSelector.getSonarClient(VERSION43)).thenReturn(defaultSonarClient);
 

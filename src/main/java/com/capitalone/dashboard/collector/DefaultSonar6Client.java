@@ -40,7 +40,9 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     private static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     private static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
-    private static String metrics = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
+    private static final String DEFAULT_METRICS = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
+    private final String metrics;
+
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static final String ID = "id";
     private static final String NAME = "name";
@@ -54,7 +56,7 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String EVENTS = "events";
 
     private final RestClient restClient;
-    private final RestUserInfo userInfo;
+    private RestUserInfo userInfo = new RestUserInfo("","");
 
     private static final String MINUTES_FORMAT = "%smin";
     private static final String HOURS_FORMAT = "%sh";
@@ -64,34 +66,51 @@ public class DefaultSonar6Client implements SonarClient {
 
     @Autowired
     public DefaultSonar6Client(RestClient restClient, SonarSettings settings) {
-        if(StringUtils.isEmpty(settings.getUsername())|| StringUtils.isEmpty(settings.getPassword())){
-            this.userInfo= new RestUserInfo("","");
-        }else{
-            this.userInfo = new RestUserInfo(settings.getUsername(),settings.getPassword());
-        }
-
         this.restClient = restClient;
 
         // override default sonar metrics to fetch via properties file settings
         if (!StringUtils.isEmpty(settings.getMetrics63andAbove())) {
             metrics = settings.getMetrics63andAbove();
+        } else {
+            metrics = DEFAULT_METRICS;
         }
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl,String token) {
+    public void setServerCredentials(String username, String password, String token) {
+        // use token when given
+        if (StringUtils.isNotBlank(token)) {
+            this.userInfo.setToken(token);
+            this.userInfo.setUserId(null);
+            this.userInfo.setPassCode(null);
+        }
+
+        // but username and password override token
+        if(StringUtils.isNotBlank(username) && StringUtils.isNotBlank(password)){
+            this.userInfo = new RestUserInfo(username, password);
+        }
+
+        if (StringUtils.isNotBlank(token)
+                && StringUtils.isNotBlank(username)
+                && StringUtils.isNotBlank(password)) {
+            LOG.error("Only one mode of authentication is needed. Either token or username/password. " +
+                    "Both modes were detected. Using username/password");
+        }
+    }
+
+    @Override
+    public List<SonarProject> getProjects(String instanceUrl) {
         List<SonarProject> projects = new ArrayList<>();
         String url = "";
         // take authenticated route
-        if(Objects.nonNull(token)){
+        if(Objects.nonNull(userInfo.getToken())){
             url = instanceUrl +  URL_RESOURCES_AUTHENTICATED;
-            userInfo.setToken(token);
         }else{
             url = instanceUrl + URL_RESOURCES;
         }
 
         try {
-            JSONArray jsonArray = getProjects(url);
+            JSONArray jsonArray = getProjectsWithPaging(url);
             for (Object obj : jsonArray) {
                 JSONObject prjData = (JSONObject) obj;
 
@@ -111,7 +130,7 @@ public class DefaultSonar6Client implements SonarClient {
         return projects;
     }
 
-    private JSONArray getProjects(String url) throws ParseException {
+    private JSONArray getProjectsWithPaging(String url) throws ParseException {
         String key = "components";
         Long totalRecords = getTotalCount(parseJsonObject(url, "paging"));
         int pages = (int) Math.ceil((double)totalRecords / PAGE_SIZE);

@@ -35,7 +35,8 @@ public class DefaultSonarClient implements SonarClient {
     protected static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     protected static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     protected static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
-    protected static String metrics = "ncloc,line_coverage,violations,critical_violations,major_violations,blocker_violations,violations_density,sqale_index,test_success_density,test_failures,test_errors,tests";
+    protected static final String DEFAULT_METRICS = "ncloc,line_coverage,violations,critical_violations,major_violations,blocker_violations,violations_density,sqale_index,test_success_density,test_failures,test_errors,tests";
+    protected final String metrics;
 
     protected static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     protected static final String ID = "id";
@@ -52,20 +53,43 @@ public class DefaultSonarClient implements SonarClient {
     protected static final String DATE = "date";
 
     protected final RestClient restClient;
-    protected final RestUserInfo userInfo;
+    protected RestUserInfo userInfo;
 
     @Autowired
     public DefaultSonarClient(RestClient restClient, SonarSettings settings) {
-        userInfo = settings.getUsername()==null?null:new RestUserInfo(settings.getUsername(), settings.getPassword());
         this.restClient = restClient;
 
         if (!StringUtils.isEmpty(settings.getMetricsBefore63())) {
             metrics = settings.getMetricsBefore63();
+        } else {
+            metrics = DEFAULT_METRICS;
         }
     }
 
     @Override
-    public List<SonarProject> getProjects(String instanceUrl,String token) {
+    public void setServerCredentials(String username, String password, String token) {
+        // use token when given
+        if (StringUtils.isNotBlank(token)) {
+            this.userInfo.setToken(token);
+            this.userInfo.setUserId(null);
+            this.userInfo.setPassCode(null);
+        }
+
+        // but username and password override token
+        if(StringUtils.isNotBlank(username) && StringUtils.isNotBlank(password)){
+            this.userInfo = new RestUserInfo(username, password);
+        }
+
+        if (StringUtils.isNotBlank(token)
+                && StringUtils.isNotBlank(username)
+                && StringUtils.isNotBlank(password)) {
+            LOG.error("Only one mode of authentication is needed. Either token or username/password. " +
+                    "Both modes were detected. Using username/password");
+        }
+    }
+
+    @Override
+    public List<SonarProject> getProjects(String instanceUrl) {
         List<SonarProject> projects = new ArrayList<>();
         String url = instanceUrl + URL_RESOURCES;
 
