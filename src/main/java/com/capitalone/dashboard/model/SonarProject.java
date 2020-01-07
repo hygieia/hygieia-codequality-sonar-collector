@@ -1,5 +1,7 @@
 package com.capitalone.dashboard.model;
 
+import java.util.Objects;
+
 public class SonarProject extends CollectorItem {
     protected static final String INSTANCE_URL = "instanceUrl";
     protected static final String PROJECT_NAME = "projectName";
@@ -35,13 +37,13 @@ public class SonarProject extends CollectorItem {
         if (o == null || getClass() != o.getClass()) return false;
 
         SonarProject that = (SonarProject) o;
-        return getProjectId().equals(that.getProjectId()) && getInstanceUrl().equals(that.getInstanceUrl());
+        return Objects.equals(getProjectName(), that.getProjectName()) && Objects.equals(getInstanceUrl(), that.getInstanceUrl());
     }
 
     @Override
     public int hashCode() {
         int result = getInstanceUrl().hashCode();
-        result = 31 * result + getProjectId().hashCode();
+        result = 31 * result + getProjectName().hashCode();
         return result;
     }
 }
