@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 @Component
@@ -327,11 +328,16 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 newProjects.add(project);
                 count++;
             }else{
-                int index = existingProjects.indexOf(project);
-                SonarProject s = existingProjects.get(index);
-                if(StringUtils.isEmpty(s.getNiceName())){
-                    s.setNiceName(niceName);
-                    updateProjects.add(s);
+                if(CollectionUtils.isNotEmpty(existingProjects)){
+                    int[] indexes = IntStream.range(0,existingProjects.size()).filter(i-> existingProjects.get(i).equals(project)).toArray();
+                    for (int index :indexes) {
+                        SonarProject s = existingProjects.get(index);
+                        s.setProjectId(project.getProjectId());
+                        if(StringUtils.isEmpty(s.getNiceName())){
+                            s.setNiceName(niceName);
+                            updateProjects.add(s);
+                        }
+                    }
                 }
             }
         }
