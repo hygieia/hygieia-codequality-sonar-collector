@@ -335,8 +335,8 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                         s.setProjectId(project.getProjectId());
                         if(StringUtils.isEmpty(s.getNiceName())){
                             s.setNiceName(niceName);
-                            updateProjects.add(s);
                         }
+                        updateProjects.add(s);
                     }
                 }
             }
