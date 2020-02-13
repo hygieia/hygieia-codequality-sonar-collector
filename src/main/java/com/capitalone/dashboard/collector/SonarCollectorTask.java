@@ -225,7 +225,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                         .findByCollectorTypeAndItemIdIn(CollectorType.CodeQuality, Collections.singletonList(job.getId()));
 
                     for (com.capitalone.dashboard.model.Component c: comps) {
-                        c.getCollectorItems().remove(CollectorType.CodeQuality);
+                        c.getCollectorItems().get(CollectorType.CodeQuality).removeIf(collectorItem -> collectorItem.getId().equals(job.getId()));
                     }
                     dbComponentRepository.save(comps);
 
