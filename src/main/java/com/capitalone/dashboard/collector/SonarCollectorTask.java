@@ -156,7 +156,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 log("Finished", start);
             }
         }
-        deleteUnwantedJobs(latestProjects, existingProjects, collector);
+        
     }
 
     private String getFromListSafely(List<String> ls, int index){
