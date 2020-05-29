@@ -42,7 +42,7 @@ public class SonarCollectorTaskTest {
     @Mock private SonarClientSelector sonarClientSelector;
     @Mock private DefaultSonarClient defaultSonarClient;
     @Mock private DefaultSonar6Client defaultSonar6Client;
-    @Mock private DefaultSonar83Client defaultSonar83Client;
+    @Mock private DefaultSonar8Client defaultSonar8Client;
 
     private static final String SERVER1 = "server1";
     private static final String SERVER2 = "server2";
@@ -91,11 +91,11 @@ public class SonarCollectorTaskTest {
     	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
     	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, null);
 
-        Mockito.doReturn(qualityProfiles83).when(defaultSonar83Client).getQualityProfiles(SERVER1);
-        Mockito.doReturn(qualityProfiles83).when(defaultSonar83Client).getQualityProfiles(SERVER2);
+        Mockito.doReturn(qualityProfiles83).when(defaultSonar8Client).getQualityProfiles(SERVER1);
+        Mockito.doReturn(qualityProfiles83).when(defaultSonar8Client).getQualityProfiles(SERVER2);
 
-        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar83Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
-        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar83Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, LANGUAGE);
+        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
+        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, LANGUAGE);
     }
 
     @Test
@@ -171,14 +171,14 @@ public class SonarCollectorTaskTest {
         when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("yes"));
         when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("4kkpt"));
 
-        when(sonarClientSelector.getSonarClient(VERSION83)).thenReturn(defaultSonar83Client);
+        when(sonarClientSelector.getSonarClient(VERSION83)).thenReturn(defaultSonar8Client);
 
         task.collect(collectorWithOneServer());
 
         verify(sonarClientSelector).getSonarClient(VERSION83);
-        verify(defaultSonar83Client).getQualityProfiles(SERVER1);
-        verify(defaultSonar83Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
-        verify(defaultSonar83Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
+        verify(defaultSonar8Client).getQualityProfiles(SERVER1);
+        verify(defaultSonar8Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
+        verify(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
     }
 
     @Test

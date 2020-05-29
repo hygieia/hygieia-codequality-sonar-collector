@@ -25,7 +25,7 @@ public class SonarClientSelectorTest {
     @Mock
     private DefaultSonar56Client defaultSonar56Client;
     @Mock
-    private DefaultSonar83Client defaultSonar83Client;
+    private DefaultSonar8Client defaultSonar8Client;
     @Mock
     private Supplier<RestOperations> restOperationsSupplier;
 
@@ -62,7 +62,7 @@ public class SonarClientSelectorTest {
     @Test
     public void getSonarClient83() throws Exception {
         SonarClient sonarClient = selector.getSonarClient(8.3);
-        assertThat(sonarClient, instanceOf(DefaultSonar83Client.class));
+        assertThat(sonarClient, instanceOf(DefaultSonar8Client.class));
     }
 
 }

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Component
+@Component("DefaultSonar6Client")
 public class DefaultSonar6Client implements SonarClient {
     private static final Log LOG = LogFactory.getLog(DefaultSonar6Client.class);
     private static final String URL_RESOURCES = "/api/components/search?qualifiers=TRK&ps=500";
