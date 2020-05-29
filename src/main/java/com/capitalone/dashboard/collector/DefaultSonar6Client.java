@@ -274,7 +274,7 @@ public class DefaultSonar6Client implements SonarClient {
     	}
     }
     
-    public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,String qualityProfile) throws ParseException{
+    public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,String qualityProfile,String language) throws ParseException{
     	String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile;
     	try {
     		JSONArray qualityProfileConfigChanges = this.parseAsArray(url, "events");
@@ -288,7 +288,7 @@ public class DefaultSonar6Client implements SonarClient {
     	}
     }
 
-    private JSONArray parseAsArray(String url, String key) throws ParseException {
+    protected JSONArray parseAsArray(String url, String key) throws ParseException {
         JSONObject jsonObject = getResponse(url);
         return (JSONArray) jsonObject.get(key);
     }

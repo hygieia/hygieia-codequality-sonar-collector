@@ -42,6 +42,7 @@ public class SonarCollectorTaskTest {
     @Mock private SonarClientSelector sonarClientSelector;
     @Mock private DefaultSonarClient defaultSonarClient;
     @Mock private DefaultSonar6Client defaultSonar6Client;
+    @Mock private DefaultSonar83Client defaultSonar83Client;
 
     private static final String SERVER1 = "server1";
     private static final String SERVER2 = "server2";
@@ -50,12 +51,16 @@ public class SonarCollectorTaskTest {
     private static final Double VERSION43 = 4.3;
     private static final Double VERSION54 = 5.4;
     private static final Double VERSION63 = 6.3;
+    private static final Double VERSION83 = 8.3;
     private static final String NICENAME1 = "niceName1";
     private static final String NICENAME2 = "niceName2";
     private static final String QUALITYPROFILE = "cs-default-donotmodify-89073";
+    private static final String LANGUAGE = "java";
     private JSONArray qualityProfiles = new JSONArray();
-    private JSONArray profileConfigurationChanges = new JSONArray();                                                           
+    private JSONArray qualityProfiles83 = new JSONArray();
+    private JSONArray profileConfigurationChanges = new JSONArray();
     private JSONObject qualityProfile = new JSONObject();
+    private JSONObject qualityProfile83 = new JSONObject();
     private JSONObject profileConfigurationChange = new JSONObject();
     ConfigHistOperationType operation = ConfigHistOperationType.CHANGED;
     
@@ -64,8 +69,13 @@ public class SonarCollectorTaskTest {
     	qualityProfile.put("key", QUALITYPROFILE);
     	qualityProfile.put("name", "Default-DoNotModify");
     	qualityProfiles.add(qualityProfile);
-    	
-    	profileConfigurationChange.put("authorName", "foo");
+
+        qualityProfile83.put("key", QUALITYPROFILE);
+        qualityProfile83.put("name", "Default-DoNotModify");
+        qualityProfile83.put("language", LANGUAGE);
+        qualityProfiles83.add(qualityProfile83);
+
+        profileConfigurationChange.put("authorName", "foo");
     	profileConfigurationChange.put("authorLogin", "bar");
     	profileConfigurationChange.put("date", "2017-10-05T13:57:40+0000");
     	profileConfigurationChange.put("action", "DEACTIVATED");
@@ -73,13 +83,19 @@ public class SonarCollectorTaskTest {
     	
     	Mockito.doReturn(qualityProfiles).when(defaultSonarClient).getQualityProfiles(SERVER1);
     	
-    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonarClient).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE);                                                 
+    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonarClient).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
 
     	Mockito.doReturn(qualityProfiles).when(defaultSonar6Client).getQualityProfiles(SERVER1);
     	Mockito.doReturn(qualityProfiles).when(defaultSonar6Client).getQualityProfiles(SERVER2);
 
-    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE);                                                 
-    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE);
+    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
+    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, null);
+
+        Mockito.doReturn(qualityProfiles83).when(defaultSonar83Client).getQualityProfiles(SERVER1);
+        Mockito.doReturn(qualityProfiles83).when(defaultSonar83Client).getQualityProfiles(SERVER2);
+
+        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar83Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
+        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar83Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, LANGUAGE);
     }
 
     @Test
@@ -120,7 +136,7 @@ public class SonarCollectorTaskTest {
         verify(sonarClientSelector).getSonarClient(VERSION54);
         verify(defaultSonar6Client).getQualityProfiles(SERVER1);
         verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
-        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE);
+        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
     }
 
     @Test
@@ -141,7 +157,28 @@ public class SonarCollectorTaskTest {
         verify(sonarClientSelector).getSonarClient(VERSION63);
         verify(defaultSonar6Client).getQualityProfiles(SERVER1);
         verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
-        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE);
+        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
+    }
+
+    @Test
+    public void collectOneServer83() throws Exception {
+        when(dbComponentRepository.findAll()).thenReturn(components());
+        when(sonarClientSelector.getSonarVersion(SERVER1)).thenReturn(VERSION83);
+
+        when(sonarSettings.getServers())
+                .thenReturn(Arrays.asList(SERVER1))
+                .thenReturn(Arrays.asList(SERVER1));
+        when(sonarSettings.getUsernames()).thenReturn(Arrays.asList("yes"));
+        when(sonarSettings.getPasswords()).thenReturn(Arrays.asList("4kkpt"));
+
+        when(sonarClientSelector.getSonarClient(VERSION83)).thenReturn(defaultSonar83Client);
+
+        task.collect(collectorWithOneServer());
+
+        verify(sonarClientSelector).getSonarClient(VERSION83);
+        verify(defaultSonar83Client).getQualityProfiles(SERVER1);
+        verify(defaultSonar83Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
+        verify(defaultSonar83Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
     }
 
     @Test
@@ -162,7 +199,7 @@ public class SonarCollectorTaskTest {
         
         verify(defaultSonar6Client).getQualityProfiles(SERVER2);
         verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER2, QUALITYPROFILE);
-        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE);
+        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, null);
         
     }
 
