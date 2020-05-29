@@ -170,9 +170,9 @@ public class DefaultSonarClient implements SonarClient {
     	}
     }
 
-    public List<String> retrieveProfileAndProjectAssociation(String instanceUrl,String qualityProfile) throws ParseException{
+    public List<String> retrieveProfileAndProjectAssociation(String instanceUrl,JSONObject qualityProfile) throws ParseException{
     	List<String> projects = new ArrayList<>();
-    	String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile;
+    	String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile.get("key");
     	try {
     		JSONArray associatedProjects = this.parseAsArray(url, "results");
     		if (!CollectionUtils.isEmpty(associatedProjects)) {
@@ -193,8 +193,8 @@ public class DefaultSonarClient implements SonarClient {
     	}
     }
     
-   public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,String qualityProfile,String language) throws ParseException{
-	   String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile;
+   public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,JSONObject qualityProfile) throws ParseException{
+	   String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile.get("key");
 	   try {
 		   JSONArray qualityProfileConfigChanges = this.parseAsArray(url, "events");
 		   return qualityProfileConfigChanges;

@@ -4,6 +4,7 @@ import com.capitalone.dashboard.client.RestClient;
 import com.capitalone.dashboard.util.Supplier;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,10 +48,14 @@ public class DefaultSonar8ClientTest {
 
     @Test
     public void getChangeLog() throws Exception {
+        JSONObject qualityProfile = new JSONObject();
+        qualityProfile.put("key", "key");
+        qualityProfile.put("name", "name");
+        qualityProfile.put("language", "java");
         String changeLogJson = getJson("sonar83changelog.json");
-        String changelogUrl = String.format(SONAR_URL + DefaultSonar8Client.URL_QUALITY_PROFILE_CHANGES,"foo","java");
+        String changelogUrl = String.format(SONAR_URL + DefaultSonar8Client.URL_QUALITY_PROFILE_CHANGES,"name","java");
         doReturn(new ResponseEntity<>(changeLogJson, HttpStatus.OK)).when(rest).exchange(eq(changelogUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        JSONArray events = defaultSonar8Client.getQualityProfileConfigurationChanges(SONAR_URL,"foo", "java");
+        JSONArray events = defaultSonar8Client.getQualityProfileConfigurationChanges(SONAR_URL,qualityProfile);
         assertThat(events.size(), is(3));
     }
 

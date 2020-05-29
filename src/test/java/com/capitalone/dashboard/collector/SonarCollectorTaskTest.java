@@ -83,19 +83,19 @@ public class SonarCollectorTaskTest {
     	
     	Mockito.doReturn(qualityProfiles).when(defaultSonarClient).getQualityProfiles(SERVER1);
     	
-    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonarClient).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
+    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonarClient).getQualityProfileConfigurationChanges(SERVER1, qualityProfile);
 
     	Mockito.doReturn(qualityProfiles).when(defaultSonar6Client).getQualityProfiles(SERVER1);
     	Mockito.doReturn(qualityProfiles).when(defaultSonar6Client).getQualityProfiles(SERVER2);
 
-    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
-    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, null);
+    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, qualityProfile);
+    	Mockito.doReturn(profileConfigurationChanges).when(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, qualityProfile);
 
         Mockito.doReturn(qualityProfiles83).when(defaultSonar8Client).getQualityProfiles(SERVER1);
         Mockito.doReturn(qualityProfiles83).when(defaultSonar8Client).getQualityProfiles(SERVER2);
 
-        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
-        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, LANGUAGE);
+        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER1, qualityProfile83);
+        Mockito.doReturn(profileConfigurationChanges).when(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER2, qualityProfile83);
     }
 
     @Test
@@ -135,8 +135,8 @@ public class SonarCollectorTaskTest {
 
         verify(sonarClientSelector).getSonarClient(VERSION54);
         verify(defaultSonar6Client).getQualityProfiles(SERVER1);
-        verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
-        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
+        verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, qualityProfile);
+        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, qualityProfile);
     }
 
     @Test
@@ -156,8 +156,8 @@ public class SonarCollectorTaskTest {
 
         verify(sonarClientSelector).getSonarClient(VERSION63);
         verify(defaultSonar6Client).getQualityProfiles(SERVER1);
-        verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
-        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, null);
+        verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER1, qualityProfile);
+        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER1, qualityProfile);
     }
 
     @Test
@@ -177,8 +177,8 @@ public class SonarCollectorTaskTest {
 
         verify(sonarClientSelector).getSonarClient(VERSION83);
         verify(defaultSonar8Client).getQualityProfiles(SERVER1);
-        verify(defaultSonar8Client).retrieveProfileAndProjectAssociation(SERVER1, QUALITYPROFILE);
-        verify(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER1, QUALITYPROFILE, LANGUAGE);
+        verify(defaultSonar8Client).retrieveProfileAndProjectAssociation(SERVER1, qualityProfile83);
+        verify(defaultSonar8Client).getQualityProfileConfigurationChanges(SERVER1, qualityProfile83);
     }
 
     @Test
@@ -198,8 +198,8 @@ public class SonarCollectorTaskTest {
         verify(sonarClientSelector).getSonarClient(VERSION54);
         
         verify(defaultSonar6Client).getQualityProfiles(SERVER2);
-        verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER2, QUALITYPROFILE);
-        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, QUALITYPROFILE, null);
+        verify(defaultSonar6Client).retrieveProfileAndProjectAssociation(SERVER2, qualityProfile);
+        verify(defaultSonar6Client).getQualityProfileConfigurationChanges(SERVER2, qualityProfile);
         
     }
 

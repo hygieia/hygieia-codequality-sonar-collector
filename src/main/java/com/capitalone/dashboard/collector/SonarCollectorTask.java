@@ -268,12 +268,10 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         
     	for (Object qualityProfile : qualityProfiles ) {
     		JSONObject qualityProfileJson = (JSONObject) qualityProfile;
-    		String qualityProfileKey = (String)qualityProfileJson.get("key");
-            String language = (String)qualityProfileJson.get("language");
 
-    		List<String> sonarProjects = sonarClient.retrieveProfileAndProjectAssociation(instanceUrl,qualityProfileKey);
+    		List<String> sonarProjects = sonarClient.retrieveProfileAndProjectAssociation(instanceUrl,qualityProfileJson);
     		if (sonarProjects != null){
-    			sonarProfileConfigurationChanges = sonarClient.getQualityProfileConfigurationChanges(instanceUrl,qualityProfileKey,language);
+    			sonarProfileConfigurationChanges = sonarClient.getQualityProfileConfigurationChanges(instanceUrl,qualityProfileJson);
     			addNewConfigurationChanges(collector,sonarProfileConfigurationChanges);
     		}
     	}
