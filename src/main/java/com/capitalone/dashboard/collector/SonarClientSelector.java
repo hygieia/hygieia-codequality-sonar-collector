@@ -24,6 +24,7 @@ public class SonarClientSelector {
 
 	private static final String URL_VERSION_RESOURCE = "/api/server/version";
 
+    private DefaultSonar8Client sonar8Client;
     private DefaultSonar6Client sonar6Client;
     private DefaultSonar56Client sonar56Client;
     private DefaultSonarClient sonarClient;
@@ -31,10 +32,11 @@ public class SonarClientSelector {
     
     @Autowired
     public SonarClientSelector(
-    		DefaultSonar6Client sonar6Client, DefaultSonar56Client sonar56Client,
+            DefaultSonar8Client sonar8Client, @Qualifier("DefaultSonar6Client") DefaultSonar6Client sonar6Client, DefaultSonar56Client sonar56Client,
             @Qualifier("DefaultSonarClient") DefaultSonarClient sonarClient,
             Supplier<RestOperations> restOperationsSupplier) {
 
+        this.sonar8Client = sonar8Client;
         this.sonar6Client = sonar6Client;
         this.sonar56Client = sonar56Client;
         this.sonarClient = sonarClient;
@@ -62,6 +64,9 @@ public class SonarClientSelector {
     public SonarClient getSonarClient(Double version) {
         if(version != null && version == 5.6){
           return sonar56Client;
+        }
+        if (version != null && version >= 8.0){
+            return sonar8Client;
         }
         return ((version == null) || (version < 6.3)) ? sonarClient : sonar6Client;
     }

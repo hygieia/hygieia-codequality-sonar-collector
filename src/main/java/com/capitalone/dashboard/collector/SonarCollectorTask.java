@@ -263,16 +263,15 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     }
 
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
-    	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);   
+    	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);
     	JSONArray sonarProfileConfigurationChanges = new JSONArray();
         
-    	for (Object qualityProfile : qualityProfiles ) {      	
+    	for (Object qualityProfile : qualityProfiles ) {
     		JSONObject qualityProfileJson = (JSONObject) qualityProfile;
-    		String qualityProfileKey = (String)qualityProfileJson.get("key");
 
-    		List<String> sonarProjects = sonarClient.retrieveProfileAndProjectAssociation(instanceUrl,qualityProfileKey);
+    		List<String> sonarProjects = sonarClient.retrieveProfileAndProjectAssociation(instanceUrl,qualityProfileJson);
     		if (sonarProjects != null){
-    			sonarProfileConfigurationChanges = sonarClient.getQualityProfileConfigurationChanges(instanceUrl,qualityProfileKey);
+    			sonarProfileConfigurationChanges = sonarClient.getQualityProfileConfigurationChanges(instanceUrl,qualityProfileJson);
     			addNewConfigurationChanges(collector,sonarProfileConfigurationChanges);
     		}
     	}

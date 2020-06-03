@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Component
+@Component("DefaultSonar6Client")
 public class DefaultSonar6Client implements SonarClient {
     private static final Log LOG = LogFactory.getLog(DefaultSonar6Client.class);
     private static final String URL_RESOURCES = "/api/components/search?qualifiers=TRK&ps=500";
@@ -237,9 +237,9 @@ public class DefaultSonar6Client implements SonarClient {
         }
     }
 
-    public List<String> retrieveProfileAndProjectAssociation(String instanceUrl,String qualityProfile) throws ParseException{
+    public List<String> retrieveProfileAndProjectAssociation(String instanceUrl,JSONObject qualityProfile) throws ParseException{
     	List<String> projects = new ArrayList<>();
-    	String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile;
+    	String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile.get("key");
     	try {
     		JSONArray associatedProjects = this.parseAsArray(url, "results");
     		if (!CollectionUtils.isEmpty(associatedProjects)) {
@@ -274,8 +274,8 @@ public class DefaultSonar6Client implements SonarClient {
     	}
     }
     
-    public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,String qualityProfile) throws ParseException{
-    	String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile;
+    public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,JSONObject qualityProfile) throws ParseException{
+    	String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile.get("key");
     	try {
     		JSONArray qualityProfileConfigChanges = this.parseAsArray(url, "events");
     		return qualityProfileConfigChanges;
@@ -288,7 +288,7 @@ public class DefaultSonar6Client implements SonarClient {
     	}
     }
 
-    private JSONArray parseAsArray(String url, String key) throws ParseException {
+    protected JSONArray parseAsArray(String url, String key) throws ParseException {
         JSONObject jsonObject = getResponse(url);
         return (JSONArray) jsonObject.get(key);
     }

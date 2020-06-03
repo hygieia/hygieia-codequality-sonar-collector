@@ -6,6 +6,7 @@ import com.capitalone.dashboard.model.SonarProject;
 import java.util.List;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
 public interface SonarClient {
@@ -20,8 +21,8 @@ public interface SonarClient {
     List<SonarProject> getProjects(String instanceUrl);
     CodeQuality currentCodeQuality(SonarProject project);
     JSONArray getQualityProfiles(String instanceUrl) throws ParseException;
-    List<String> retrieveProfileAndProjectAssociation(String instanceUrl,String qualityProfile) throws ParseException;
-    JSONArray getQualityProfileConfigurationChanges(String instanceUrl,String qualityProfile) throws ParseException; 
+    List<String> retrieveProfileAndProjectAssociation(String instanceUrl,JSONObject qualityProfile) throws ParseException;
+    JSONArray getQualityProfileConfigurationChanges(String instanceUrl,JSONObject qualityProfile) throws ParseException;
 
 
 }
