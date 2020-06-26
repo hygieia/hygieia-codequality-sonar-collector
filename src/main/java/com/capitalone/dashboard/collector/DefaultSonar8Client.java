@@ -1,6 +1,7 @@
 package com.capitalone.dashboard.collector;
 
 import com.capitalone.dashboard.client.RestClient;
+import com.capitalone.dashboard.model.SonarProject;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONArray;
@@ -14,7 +15,8 @@ import org.springframework.web.client.RestClientException;
 public class DefaultSonar8Client extends DefaultSonar6Client {
     private static final Log LOG = LogFactory.getLog(DefaultSonar8Client.class);
 
-    protected static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?qualityProfile=%s&language=%s";
+    static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?qualityProfile=%s&language=%s";
+    static final String URL_RESOURCE_DETAILS = "/api/measures/component?component=%s&metricKeys=%s";
 
     @Autowired
     public DefaultSonar8Client(RestClient restClient, SonarSettings settings) {
@@ -36,4 +38,17 @@ public class DefaultSonar8Client extends DefaultSonar6Client {
         }
     }
 
+    @Override
+    protected SonarProject parseSonarProject(String instanceUrl, JSONObject prjData) {
+        SonarProject project = new SonarProject();
+        project.setInstanceUrl(instanceUrl);
+        project.setProjectId(str(prjData, KEY));
+        project.setProjectName(str(prjData, NAME));
+        return project;
+
+    }
+
+    protected String getResourceDetailsUrl() {
+        return URL_RESOURCE_DETAILS;
+    }
 }

@@ -1,0 +1,72 @@
+{
+  "component": {
+    "id": "AXLkQmaa11hrJILNMzM_",
+    "key": "test",
+    "name": "test",
+    "qualifier": "TRK",
+    "measures": [
+      {
+        "metric": "blocker_violations",
+        "value": "0",
+        "bestValue": true
+      },
+      {
+        "metric": "line_coverage",
+        "value": "0.0",
+        "bestValue": false
+      },
+      {
+        "metric": "critical_violations",
+        "value": "0",
+        "bestValue": true
+      },
+      {
+        "metric": "quality_gate_details",
+        "value": "{\"level\":\"OK\",\"conditions\":[{\"metric\":\"new_reliability_rating\",\"op\":\"GT\",\"period\":1,\"error\":\"1\",\"actual\":\"1\",\"level\":\"OK\"},{\"metric\":\"new_security_rating\",\"op\":\"GT\",\"period\":1,\"error\":\"1\",\"actual\":\"1\",\"level\":\"OK\"},{\"metric\":\"new_maintainability_rating\",\"op\":\"GT\",\"period\":1,\"error\":\"1\",\"actual\":\"1\",\"level\":\"OK\"}],\"ignoredConditions\":false}"
+      },
+      {
+        "metric": "ncloc",
+        "value": "5"
+      },
+      {
+        "metric": "violations",
+        "value": "0",
+        "bestValue": true
+      },
+      {
+        "metric": "sqale_index",
+        "value": "0",
+        "bestValue": true
+      },
+      {
+        "metric": "alert_status",
+        "value": "OK"
+      },
+      {
+        "metric": "coverage",
+        "value": "0.0",
+        "bestValue": false
+      },
+      {
+        "metric": "major_violations",
+        "value": "0",
+        "bestValue": true
+      },
+      {
+        "metric": "new_vulnerabilities",
+        "periods": [
+          {
+            "index": 1,
+            "value": "0",
+            "bestValue": true
+          }
+        ],
+        "period": {
+          "index": 1,
+          "value": "0",
+          "bestValue": true
+        }
+      }
+    ]
+  }
+}
