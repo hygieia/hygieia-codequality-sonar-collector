@@ -1,0 +1,23 @@
+{
+  "paging": {
+    "pageIndex": 1,
+    "pageSize": 100,
+    "total": 2
+  },
+  "components": [
+    {
+      "organization": "my-org-1",
+      "key": "project-key",
+      "qualifier": "TRK",
+      "name": "Project Name",
+      "project": "project-key"
+    },
+    {
+      "organization": "my-org-1",
+      "key": "project-key-2",
+      "qualifier": "TRK",
+      "name": "Project Name 2",
+      "project": "project-key-2"
+    }
+  ]
+}

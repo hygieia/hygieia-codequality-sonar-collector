@@ -2,11 +2,7 @@ package com.capitalone.dashboard.collector;
 
 import com.capitalone.dashboard.client.RestClient;
 import com.capitalone.dashboard.client.RestUserInfo;
-import com.capitalone.dashboard.model.CodeQuality;
-import com.capitalone.dashboard.model.CodeQualityMetric;
-import com.capitalone.dashboard.model.CodeQualityMetricStatus;
-import com.capitalone.dashboard.model.CodeQualityType;
-import com.capitalone.dashboard.model.SonarProject;
+import com.capitalone.dashboard.model.*;
 import com.capitalone.dashboard.util.SonarDashboardUrl;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
@@ -36,27 +32,27 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String URL_RESOURCES = "/api/components/search?qualifiers=TRK&ps=500";
     private static final String URL_RESOURCES_AUTHENTICATED = "/api/projects/search?ps=500";
     private static final String URL_RESOURCE_DETAILS = "/api/measures/component?format=json&componentId=%s&metricKeys=%s&includealerts=true";
-    private static final String URL_PROJECT_ANALYSES = "/api/project_analyses/search?project=%s";
+    static final String URL_PROJECT_ANALYSES = "/api/project_analyses/search?project=%s";
     private static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     private static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     private static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
     private static final String DEFAULT_METRICS = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
-    private final String metrics;
+    protected final String metrics;
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static final String ID = "id";
-    private static final String NAME = "name";
-    private static final String KEY = "key";
-    private static final String METRIC = "metric";
-    private static final String MSR = "measures";
-    private static final String VALUE = "value";
+    protected static final String NAME = "name";
+    protected static final String KEY = "key";
+    protected static final String METRIC = "metric";
+    protected static final String MSR = "measures";
+    protected static final String VALUE = "value";
     private static final String STATUS_WARN = "WARN";
     private static final String STATUS_ALERT = "ALERT";
     private static final String DATE = "date";
     private static final String EVENTS = "events";
 
-    private final RestClient restClient;
-    private RestUserInfo userInfo = new RestUserInfo("","");
+    protected final RestClient restClient;
+    protected RestUserInfo userInfo = new RestUserInfo("","");
 
     private static final String MINUTES_FORMAT = "%smin";
     private static final String HOURS_FORMAT = "%sh";
@@ -114,10 +110,7 @@ public class DefaultSonar6Client implements SonarClient {
             for (Object obj : jsonArray) {
                 JSONObject prjData = (JSONObject) obj;
 
-                SonarProject project = new SonarProject();
-                project.setInstanceUrl(instanceUrl);
-                project.setProjectId(str(prjData, ID));
-                project.setProjectName(str(prjData, NAME));
+                SonarProject project = parseSonarProject(instanceUrl, prjData);
                 projects.add(project);
             }
 
@@ -128,6 +121,14 @@ public class DefaultSonar6Client implements SonarClient {
         }
 
         return projects;
+    }
+
+    protected SonarProject parseSonarProject(String instanceUrl, JSONObject prjData) {
+        SonarProject project = new SonarProject();
+        project.setInstanceUrl(instanceUrl);
+        project.setProjectId(str(prjData, ID));
+        project.setProjectName(str(prjData, NAME));
+        return project;
     }
 
     private JSONArray getProjectsWithPaging(String url) throws ParseException {
@@ -173,43 +174,26 @@ public class DefaultSonar6Client implements SonarClient {
     @Override
     public CodeQuality currentCodeQuality(SonarProject project) {
         String url = String.format(
-                project.getInstanceUrl() + URL_RESOURCE_DETAILS, project.getProjectId(), metrics);
+                project.getInstanceUrl() + getResourceDetailsUrl(), project.getProjectId(), metrics);
 
         try {
             ResponseEntity<String> response = restClient.makeRestCallGet(url,setHeaders(userInfo) );
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
-            String key = "component";
 
             if (jsonObject != null) {
-                JSONObject prjData = (JSONObject) jsonObject.get(key);
+                JSONObject prjData = (JSONObject) jsonObject.get("component");
+                String key = str(prjData, KEY);
 
                 CodeQuality codeQuality = new CodeQuality();
                 codeQuality.setType(CodeQualityType.StaticAnalysis);
                 codeQuality.setName(str(prjData, NAME));
-                codeQuality.setUrl(new SonarDashboardUrl(project.getInstanceUrl(), str(prjData, KEY)).toString());
+                codeQuality.setUrl(new SonarDashboardUrl(project.getInstanceUrl(), key).toString());
 
-                url = String.format(
-                        project.getInstanceUrl() + URL_PROJECT_ANALYSES, str(prjData, KEY));
-                key = "analyses";
-                JSONArray jsonArray = parseAsArray(url, key);
-                getProjectAnalysis(codeQuality, jsonArray);
-                for (Object metricObj : (JSONArray) prjData.get(MSR)) {
-                    JSONObject metricJson = (JSONObject) metricObj;
+                updateCodeQualityProjectAnalysis(codeQuality, project, key);
 
-                    CodeQualityMetric metric = new CodeQualityMetric(str(metricJson, METRIC));
-                    metric.setValue(str(metricJson, VALUE));
-                    if (metric.getName().equals("sqale_index")) {
-                        metric.setFormattedValue(format(str(metricJson, VALUE)));
-                    } else if (strSafe(metricJson, VALUE).indexOf(".") > 0) {
-                        metric.setFormattedValue(str(metricJson, VALUE) + "%" );
-                    } else if (strSafe(metricJson, VALUE).matches("\\d+")) {
-                        metric.setFormattedValue(String.format("%,d", integer(metricJson, VALUE)));
-                    } else {
-                        metric.setFormattedValue(str(metricJson, VALUE));
-                    }
-                    codeQuality.getMetrics().add(metric);
-                }
+                List<CodeQualityMetric> metrics = parseCodeQualityMetrics((JSONArray) prjData.get(MSR));
+                codeQuality.getMetrics().addAll(metrics);
 
                 return codeQuality;
             }
@@ -223,7 +207,35 @@ public class DefaultSonar6Client implements SonarClient {
         return null;
     }
 
-    private void getProjectAnalysis(CodeQuality codeQuality, JSONArray jsonArray) {
+    protected String getResourceDetailsUrl() {
+        return URL_RESOURCE_DETAILS;
+    }
+
+    protected List<CodeQualityMetric> parseCodeQualityMetrics(JSONArray measures) {
+        List<CodeQualityMetric> metrics = new ArrayList<>();
+        for (Object metricObj : measures) {
+            JSONObject metricJson = (JSONObject) metricObj;
+
+            CodeQualityMetric metric = new CodeQualityMetric(str(metricJson, METRIC));
+            metric.setValue(str(metricJson, VALUE));
+            if (metric.getName().equals("sqale_index")) {
+                metric.setFormattedValue(format(str(metricJson, VALUE)));
+            } else if (strSafe(metricJson, VALUE).indexOf(".") > 0) {
+                metric.setFormattedValue(str(metricJson, VALUE) + "%" );
+            } else if (strSafe(metricJson, VALUE).matches("\\d+")) {
+                metric.setFormattedValue(String.format("%,d", integer(metricJson, VALUE)));
+            } else {
+                metric.setFormattedValue(str(metricJson, VALUE));
+            }
+            metrics.add(metric);
+        }
+        return metrics;
+    }
+
+    protected void updateCodeQualityProjectAnalysis(CodeQuality codeQuality, SonarProject project, String key) throws ParseException {
+        String url = String.format(
+                project.getInstanceUrl() + URL_PROJECT_ANALYSES, key);
+        JSONArray jsonArray = parseAsArray(url, "analyses");
         if(jsonArray!=null && !jsonArray.isEmpty()) {
             JSONObject prjLatestData = (JSONObject) jsonArray.get(0);
             codeQuality.setTimestamp(timestamp(prjLatestData, DATE));
@@ -318,18 +330,18 @@ public class DefaultSonar6Client implements SonarClient {
         return 0;
     }
 
-    private String str(JSONObject json, String key) {
+    protected String str(JSONObject json, String key) {
         Object obj = json.get(key);
         return obj == null ? null : obj.toString();
     }
 
-    private String strSafe(JSONObject json, String key) {
+    protected String strSafe(JSONObject json, String key) {
         Object obj = json.get(key);
         return obj == null ? "" : obj.toString();
     }
 
     @SuppressWarnings("unused")
-    private Integer integer(JSONObject json, String key) {
+    protected Integer integer(JSONObject json, String key) {
         Object obj = json.get(key);
         return obj == null ? null : Integer.valueOf(obj.toString());
     }
@@ -347,7 +359,7 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     @SuppressWarnings("unused")
-    private String format(String duration) {
+    protected String format(String duration) {
         Long durationInMinutes = Long.valueOf(duration);
         if (durationInMinutes == 0) {
             return "0";
@@ -436,7 +448,7 @@ public class DefaultSonar6Client implements SonarClient {
         return headers;
     }
 
-    private HttpHeaders setHeaders(RestUserInfo userInfo){
+    protected HttpHeaders setHeaders(RestUserInfo userInfo){
         if(Objects.isNull(userInfo)) return null;
         if(StringUtils.isNotBlank(userInfo.getUserId())&& StringUtils.isNotBlank(userInfo.getPassCode())){
             return createHeaders(userInfo.getUserId(),userInfo.getPassCode());

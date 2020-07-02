@@ -1,0 +1,37 @@
+{
+  "paging": {
+    "pageIndex": 1,
+    "pageSize": 100,
+    "total": 2
+  },
+  "analyses": [
+    {
+      "key": "AXLkhHy5TxMSU1eQqXk0",
+      "date": "2020-06-24T04:09:37+0000",
+      "events": [
+        {
+          "key": "AXLkhIp0TxMSU1eQqXmi",
+          "category": "VERSION",
+          "name": "1.0"
+        }
+      ],
+      "projectVersion": "1.0",
+      "manualNewCodePeriodBaseline": false,
+      "revision": "f1583e8aaf085c72054a971af9d2bd42b7d030cb"
+    },
+    {
+      "key": "AXLkXgeTO8JNUunGqs4-",
+      "date": "2020-06-24T03:27:37+0000",
+      "events": [
+        {
+          "key": "AXLkXhFYO8JNUunGqs6K",
+          "category": "VERSION",
+          "name": "not provided"
+        }
+      ],
+      "projectVersion": "not provided",
+      "manualNewCodePeriodBaseline": false,
+      "revision": "f1583e8aaf085c72054a971af9d2bd42b7d030cb"
+    }
+  ]
+}
