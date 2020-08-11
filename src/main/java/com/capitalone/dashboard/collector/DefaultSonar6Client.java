@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
@@ -172,7 +173,7 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     @Override
-    public CodeQuality currentCodeQuality(SonarProject project) throws RestClientException {
+    public CodeQuality currentCodeQuality(SonarProject project) throws HttpClientErrorException {
         String url = String.format(
                 project.getInstanceUrl() + getResourceDetailsUrl(), project.getProjectId(), metrics);
 

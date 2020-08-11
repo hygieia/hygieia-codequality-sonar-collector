@@ -1,8 +1,12 @@
 package com.capitalone.dashboard.collector;
-
-import com.capitalone.dashboard.client.RestClient;
-import com.capitalone.dashboard.client.RestUserInfo;
-import com.capitalone.dashboard.model.*;
+import com.capitalone.dashboard.model.CodeQuality;
+import com.capitalone.dashboard.model.Configuration;
+import com.capitalone.dashboard.model.SonarCollector;
+import com.capitalone.dashboard.model.SonarProject;
+import com.capitalone.dashboard.model.CollectorItem;
+import com.capitalone.dashboard.model.CollectorType;
+import com.capitalone.dashboard.model.ConfigHistOperationType;
+import com.capitalone.dashboard.model.CollectorItemConfigHistory;
 import com.capitalone.dashboard.repository.BaseCollectorRepository;
 import com.capitalone.dashboard.repository.CodeQualityRepository;
 import com.capitalone.dashboard.repository.ComponentRepository;
@@ -10,27 +14,21 @@ import com.capitalone.dashboard.repository.ConfigurationRepository;
 import com.capitalone.dashboard.repository.SonarCollectorRepository;
 import com.capitalone.dashboard.repository.SonarProfileRepostory;
 import com.capitalone.dashboard.repository.SonarProjectRepository;
-import com.sun.tools.classfile.ConstantPool;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.bson.types.Code;
 import org.bson.types.ObjectId;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestClientException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,10 +55,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private final SonarSettings sonarSettings;
     private final ComponentRepository dbComponentRepository;
     private final ConfigurationRepository configurationRepository;
-    private final RestClient restClient;
-    private static final String URL_RESOURCE_DETAILS = "/api/measures/component?format=json&componentId=%s&metricKeys=%s&includealerts=true";
-    private static final String DEFAULT_METRICS = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
-    protected RestUserInfo userInfo = new RestUserInfo("","");
 
     @Autowired
     public SonarCollectorTask(TaskScheduler taskScheduler,
@@ -71,8 +65,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                               SonarSettings sonarSettings,
                               SonarClientSelector sonarClientSelector,
                               ConfigurationRepository configurationRepository,
-                              ComponentRepository dbComponentRepository,
-                              RestClient restClient) {
+                              ComponentRepository dbComponentRepository) {
         super(taskScheduler, "Sonar");
         this.sonarCollectorRepository = sonarCollectorRepository;
         this.sonarProjectRepository = sonarProjectRepository;
@@ -82,7 +75,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         this.sonarClientSelector = sonarClientSelector;
         this.dbComponentRepository = dbComponentRepository;
         this.configurationRepository = configurationRepository;
-        this.restClient = restClient;
     }
 
     @Override
@@ -161,7 +153,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                         LOG.error(e);
                     }
                 }
-
                 log("Finished", start);
             }
         }
@@ -210,10 +201,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         if (!CollectionUtils.isEmpty(stateChangeJobList)) {
             sonarProjectRepository.save(stateChangeJobList);
         }
-    }
-
-    protected String getResourceDetailsUrl() {
-        return URL_RESOURCE_DETAILS;
     }
 
     private void deleteUnwantedJobs(List<SonarProject> latestProjects, List<SonarProject> existingProjects, SonarCollector collector) {
@@ -418,5 +405,4 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 return ConfigHistOperationType.CHANGED;
         }
     }
-
 }
