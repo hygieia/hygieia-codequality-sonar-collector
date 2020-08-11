@@ -172,7 +172,7 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     @Override
-    public CodeQuality currentCodeQuality(SonarProject project) {
+    public CodeQuality currentCodeQuality(SonarProject project) throws RestClientException {
         String url = String.format(
                 project.getInstanceUrl() + getResourceDetailsUrl(), project.getProjectId(), metrics);
 
@@ -200,8 +200,6 @@ public class DefaultSonar6Client implements SonarClient {
 
         } catch (ParseException e) {
             LOG.error("Could not parse response from: " + url, e);
-        } catch (RestClientException rce) {
-            LOG.error("Rest Client Exception: " + url + ":" + rce.getMessage());
         }
 
         return null;
@@ -250,54 +248,54 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     public List<String> retrieveProfileAndProjectAssociation(String instanceUrl,JSONObject qualityProfile) throws ParseException{
-    	List<String> projects = new ArrayList<>();
-    	String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile.get("key");
-    	try {
-    		JSONArray associatedProjects = this.parseAsArray(url, "results");
-    		if (!CollectionUtils.isEmpty(associatedProjects)) {
-    			for (Object project : associatedProjects) {
-    				JSONObject projectJson = (JSONObject) project;
-    				String projectName = (String) projectJson.get("name");
-    				projects.add(projectName);
-    			}
-    			return projects;
-    		}
-    		return null;
-    	} catch (ParseException e) {
-    		LOG.error("Could not parse response from: " + url, e);
-    		throw e;
-    	} catch (RestClientException rce) {
-    		LOG.error(rce);
-    		throw rce;
-    	}
+        List<String> projects = new ArrayList<>();
+        String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile.get("key");
+        try {
+            JSONArray associatedProjects = this.parseAsArray(url, "results");
+            if (!CollectionUtils.isEmpty(associatedProjects)) {
+                for (Object project : associatedProjects) {
+                    JSONObject projectJson = (JSONObject) project;
+                    String projectName = (String) projectJson.get("name");
+                    projects.add(projectName);
+                }
+                return projects;
+            }
+            return null;
+        } catch (ParseException e) {
+            LOG.error("Could not parse response from: " + url, e);
+            throw e;
+        } catch (RestClientException rce) {
+            LOG.error(rce);
+            throw rce;
+        }
     }
-    
+
     public JSONArray getQualityProfiles(String instanceUrl) throws ParseException {
-    	String url = instanceUrl + URL_QUALITY_PROFILES;
-    	try {
-    		JSONArray qualityProfileData = this.parseAsArray(url,"profiles");
-    		return qualityProfileData;
-    	} catch (ParseException e) {
-    		LOG.error("Could not parse response from: " + url, e);
-    		throw e;
-    	} catch (RestClientException rce) {
-    		LOG.error(rce);
-    		throw rce;
-    	}
+        String url = instanceUrl + URL_QUALITY_PROFILES;
+        try {
+            JSONArray qualityProfileData = this.parseAsArray(url,"profiles");
+            return qualityProfileData;
+        } catch (ParseException e) {
+            LOG.error("Could not parse response from: " + url, e);
+            throw e;
+        } catch (RestClientException rce) {
+            LOG.error(rce);
+            throw rce;
+        }
     }
-    
+
     public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,JSONObject qualityProfile) throws ParseException{
-    	String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile.get("key");
-    	try {
-    		JSONArray qualityProfileConfigChanges = this.parseAsArray(url, "events");
-    		return qualityProfileConfigChanges;
-    	} catch (ParseException e) {
-    		LOG.error("Could not parse response from: " + url, e);
-    		throw e;
-    	} catch (RestClientException rce) {
-    		LOG.error(rce);
-    		throw rce;
-    	}
+        String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile.get("key");
+        try {
+            JSONArray qualityProfileConfigChanges = this.parseAsArray(url, "events");
+            return qualityProfileConfigChanges;
+        } catch (ParseException e) {
+            LOG.error("Could not parse response from: " + url, e);
+            throw e;
+        } catch (RestClientException rce) {
+            LOG.error(rce);
+            throw rce;
+        }
     }
 
     protected JSONArray parseAsArray(String url, String key) throws ParseException {
@@ -457,6 +455,4 @@ public class DefaultSonar6Client implements SonarClient {
         }
         return null;
     }
-
-
 }
