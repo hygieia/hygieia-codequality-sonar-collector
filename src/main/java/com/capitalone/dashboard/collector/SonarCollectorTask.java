@@ -261,16 +261,15 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     updated++;
                 }
             } catch (HttpClientErrorException e) {
-                String compare = "{\"errors\":[{\"msg\":\"Component id \'" + project.getProjectId() + "\' not found\"}]}";
-                if ((e.getStatusCode() == HttpStatus.NOT_FOUND) && (e.getResponseBodyAsString().equals(compare))) {
+                String body = e.getResponseBodyAsString();
+                if ((e.getStatusCode() == HttpStatus.NOT_FOUND) && body != null && body.contains("errors") && body.contains("not found")) {
                     project.setEnabled(false);
                     sonarProjectRepository.save(project);
                     LOG.info("Disabled as a result of HTTPStatus.NOT_FOUND, projectName=" + project.getProjectName()
                             + ", projectId=" + project.getProjectId());
                     disabled++;
                 } else {
-                    LOG.info("HttpClientErrorException found and not disabled, projectName=" + project.getProjectName()
-                            + ", projectId=" + project.getProjectId());
+                    LOG.error(e.getStackTrace());
                 }
             } catch (ParseException parseEx) {
                 LOG.error(parseEx);
