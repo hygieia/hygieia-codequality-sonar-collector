@@ -1,10 +1,11 @@
 package com.capitalone.dashboard.collector;
-import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.Configuration;
 import com.capitalone.dashboard.model.SonarCollector;
 import com.capitalone.dashboard.model.SonarProject;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorType;
+import com.capitalone.dashboard.model.CodeQuality;
+import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.model.ConfigHistOperationType;
 import com.capitalone.dashboard.model.CollectorItemConfigHistory;
 import com.capitalone.dashboard.repository.BaseCollectorRepository;
@@ -261,8 +262,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     updated++;
                 }
             } catch (HttpClientErrorException e) {
-                String body = e.getResponseBodyAsString();
-                if ((e.getStatusCode() == HttpStatus.NOT_FOUND) && body != null && body.contains("errors") && body.contains("not found")) {
+                if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                     project.setEnabled(false);
                     sonarProjectRepository.save(project);
                     LOG.info("Disabled as a result of HTTPStatus.NOT_FOUND, projectName=" + project.getProjectName()
@@ -272,6 +272,9 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     LOG.error(e.getStackTrace());
                 }
             } catch (ParseException parseEx) {
+                CollectionError error = new CollectionError("500", parseEx.getMessage());
+                project.getErrors().add(error);
+                sonarProjectRepository.save(project);
                 LOG.error(parseEx);
             }
             count++;
