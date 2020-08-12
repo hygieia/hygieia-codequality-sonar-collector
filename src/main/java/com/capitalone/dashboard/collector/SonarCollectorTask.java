@@ -24,6 +24,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.TaskScheduler;
@@ -247,6 +248,8 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient) {
         long start = System.currentTimeMillis();
         int count = 0;
+        int updated = 0;
+        int disabled = 0;
         for (SonarProject project : sonarProjects) {
             try {
                 CodeQuality codeQuality = sonarClient.currentCodeQuality(project);
@@ -255,17 +258,22 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     sonarProjectRepository.save(project);
                     codeQuality.setCollectorItemId(project.getId());
                     codeQualityRepository.save(codeQuality);
-                    count++;
+                    updated++;
                 }
             } catch (HttpClientErrorException e) {
-                HttpStatus status = e.getStatusCode();
-                if (status.toString().equals("404")) {
+                if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                     project.setEnabled(false);
                     sonarProjectRepository.save(project);
+                    LOG.info("Disabled as a result of HTTPStatus.NOT_FOUND, projectName=" + project.getProjectName()
+                            + ", projectId=" + project.getProjectId());
+                    disabled++;
                 }
+            } catch (ParseException parseEx) {
+                LOG.error(parseEx);
             }
+            count++;
         }
-        log("Updated", start, count);
+        LOG.info("refreshData updated, total=" + count + ", updated=" + updated + ", disabled=" + disabled + ", timeTaken=" + start);
     }
 
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{

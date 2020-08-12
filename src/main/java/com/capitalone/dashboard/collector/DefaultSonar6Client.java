@@ -177,36 +177,30 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     @Override
-    public CodeQuality currentCodeQuality(SonarProject project) throws HttpClientErrorException {
+    public CodeQuality currentCodeQuality(SonarProject project) throws HttpClientErrorException, ParseException {
         String url = String.format(
                 project.getInstanceUrl() + getResourceDetailsUrl(), project.getProjectId(), metrics);
 
-        try {
-            ResponseEntity<String> response = restClient.makeRestCallGet(url,setHeaders(userInfo) );
-            JSONParser jsonParser = new JSONParser();
-            JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
+        ResponseEntity<String> response = restClient.makeRestCallGet(url,setHeaders(userInfo) );
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
 
-            if (jsonObject != null) {
-                JSONObject prjData = (JSONObject) jsonObject.get("component");
-                String key = str(prjData, KEY);
+        if (jsonObject != null) {
+            JSONObject prjData = (JSONObject) jsonObject.get("component");
+            String key = str(prjData, KEY);
 
-                CodeQuality codeQuality = new CodeQuality();
-                codeQuality.setType(CodeQualityType.StaticAnalysis);
-                codeQuality.setName(str(prjData, NAME));
-                codeQuality.setUrl(new SonarDashboardUrl(project.getInstanceUrl(), key).toString());
+            CodeQuality codeQuality = new CodeQuality();
+            codeQuality.setType(CodeQualityType.StaticAnalysis);
+            codeQuality.setName(str(prjData, NAME));
+            codeQuality.setUrl(new SonarDashboardUrl(project.getInstanceUrl(), key).toString());
 
-                updateCodeQualityProjectAnalysis(codeQuality, project, key);
+            updateCodeQualityProjectAnalysis(codeQuality, project, key);
 
-                List<CodeQualityMetric> metrics = parseCodeQualityMetrics((JSONArray) prjData.get(MSR));
-                codeQuality.getMetrics().addAll(metrics);
+            List<CodeQualityMetric> metrics = parseCodeQualityMetrics((JSONArray) prjData.get(MSR));
+            codeQuality.getMetrics().addAll(metrics);
 
-                return codeQuality;
-            }
-
-        } catch (ParseException e) {
-            LOG.error("Could not parse response from: " + url, e);
+            return codeQuality;
         }
-
         return null;
     }
 
