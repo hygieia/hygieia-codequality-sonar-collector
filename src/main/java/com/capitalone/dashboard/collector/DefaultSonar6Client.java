@@ -2,13 +2,17 @@ package com.capitalone.dashboard.collector;
 
 import com.capitalone.dashboard.client.RestClient;
 import com.capitalone.dashboard.client.RestUserInfo;
-import com.capitalone.dashboard.model.*;
+import com.capitalone.dashboard.model.CodeQualityMetric;
+import com.capitalone.dashboard.model.CodeQualityMetricStatus;
+import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.util.SonarDashboardUrl;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import com.capitalone.dashboard.model.CodeQuality;
+import com.capitalone.dashboard.model.SonarProject;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -17,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
@@ -172,38 +177,30 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     @Override
-    public CodeQuality currentCodeQuality(SonarProject project) {
+    public CodeQuality currentCodeQuality(SonarProject project) throws HttpClientErrorException, ParseException {
         String url = String.format(
                 project.getInstanceUrl() + getResourceDetailsUrl(), project.getProjectId(), metrics);
 
-        try {
-            ResponseEntity<String> response = restClient.makeRestCallGet(url,setHeaders(userInfo) );
-            JSONParser jsonParser = new JSONParser();
-            JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
+        ResponseEntity<String> response = restClient.makeRestCallGet(url,setHeaders(userInfo) );
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
 
-            if (jsonObject != null) {
-                JSONObject prjData = (JSONObject) jsonObject.get("component");
-                String key = str(prjData, KEY);
+        if (jsonObject != null) {
+            JSONObject prjData = (JSONObject) jsonObject.get("component");
+            String key = str(prjData, KEY);
 
-                CodeQuality codeQuality = new CodeQuality();
-                codeQuality.setType(CodeQualityType.StaticAnalysis);
-                codeQuality.setName(str(prjData, NAME));
-                codeQuality.setUrl(new SonarDashboardUrl(project.getInstanceUrl(), key).toString());
+            CodeQuality codeQuality = new CodeQuality();
+            codeQuality.setType(CodeQualityType.StaticAnalysis);
+            codeQuality.setName(str(prjData, NAME));
+            codeQuality.setUrl(new SonarDashboardUrl(project.getInstanceUrl(), key).toString());
 
-                updateCodeQualityProjectAnalysis(codeQuality, project, key);
+            updateCodeQualityProjectAnalysis(codeQuality, project, key);
 
-                List<CodeQualityMetric> metrics = parseCodeQualityMetrics((JSONArray) prjData.get(MSR));
-                codeQuality.getMetrics().addAll(metrics);
+            List<CodeQualityMetric> metrics = parseCodeQualityMetrics((JSONArray) prjData.get(MSR));
+            codeQuality.getMetrics().addAll(metrics);
 
-                return codeQuality;
-            }
-
-        } catch (ParseException e) {
-            LOG.error("Could not parse response from: " + url, e);
-        } catch (RestClientException rce) {
-            LOG.error("Rest Client Exception: " + url + ":" + rce.getMessage());
+            return codeQuality;
         }
-
         return null;
     }
 
@@ -250,54 +247,54 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     public List<String> retrieveProfileAndProjectAssociation(String instanceUrl,JSONObject qualityProfile) throws ParseException{
-    	List<String> projects = new ArrayList<>();
-    	String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile.get("key");
-    	try {
-    		JSONArray associatedProjects = this.parseAsArray(url, "results");
-    		if (!CollectionUtils.isEmpty(associatedProjects)) {
-    			for (Object project : associatedProjects) {
-    				JSONObject projectJson = (JSONObject) project;
-    				String projectName = (String) projectJson.get("name");
-    				projects.add(projectName);
-    			}
-    			return projects;
-    		}
-    		return null;
-    	} catch (ParseException e) {
-    		LOG.error("Could not parse response from: " + url, e);
-    		throw e;
-    	} catch (RestClientException rce) {
-    		LOG.error(rce);
-    		throw rce;
-    	}
+        List<String> projects = new ArrayList<>();
+        String url = instanceUrl + URL_QUALITY_PROFILE_PROJECT_DETAILS + qualityProfile.get("key");
+        try {
+            JSONArray associatedProjects = this.parseAsArray(url, "results");
+            if (!CollectionUtils.isEmpty(associatedProjects)) {
+                for (Object project : associatedProjects) {
+                    JSONObject projectJson = (JSONObject) project;
+                    String projectName = (String) projectJson.get("name");
+                    projects.add(projectName);
+                }
+                return projects;
+            }
+            return null;
+        } catch (ParseException e) {
+            LOG.error("Could not parse response from: " + url, e);
+            throw e;
+        } catch (RestClientException rce) {
+            LOG.error(rce);
+            throw rce;
+        }
     }
-    
+
     public JSONArray getQualityProfiles(String instanceUrl) throws ParseException {
-    	String url = instanceUrl + URL_QUALITY_PROFILES;
-    	try {
-    		JSONArray qualityProfileData = this.parseAsArray(url,"profiles");
-    		return qualityProfileData;
-    	} catch (ParseException e) {
-    		LOG.error("Could not parse response from: " + url, e);
-    		throw e;
-    	} catch (RestClientException rce) {
-    		LOG.error(rce);
-    		throw rce;
-    	}
+        String url = instanceUrl + URL_QUALITY_PROFILES;
+        try {
+            JSONArray qualityProfileData = this.parseAsArray(url,"profiles");
+            return qualityProfileData;
+        } catch (ParseException e) {
+            LOG.error("Could not parse response from: " + url, e);
+            throw e;
+        } catch (RestClientException rce) {
+            LOG.error(rce);
+            throw rce;
+        }
     }
-    
+
     public JSONArray getQualityProfileConfigurationChanges(String instanceUrl,JSONObject qualityProfile) throws ParseException{
-    	String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile.get("key");
-    	try {
-    		JSONArray qualityProfileConfigChanges = this.parseAsArray(url, "events");
-    		return qualityProfileConfigChanges;
-    	} catch (ParseException e) {
-    		LOG.error("Could not parse response from: " + url, e);
-    		throw e;
-    	} catch (RestClientException rce) {
-    		LOG.error(rce);
-    		throw rce;
-    	}
+        String url = instanceUrl + URL_QUALITY_PROFILE_CHANGES + qualityProfile.get("key");
+        try {
+            JSONArray qualityProfileConfigChanges = this.parseAsArray(url, "events");
+            return qualityProfileConfigChanges;
+        } catch (ParseException e) {
+            LOG.error("Could not parse response from: " + url, e);
+            throw e;
+        } catch (RestClientException rce) {
+            LOG.error(rce);
+            throw rce;
+        }
     }
 
     protected JSONArray parseAsArray(String url, String key) throws ParseException {
@@ -457,6 +454,4 @@ public class DefaultSonar6Client implements SonarClient {
         }
         return null;
     }
-
-
 }

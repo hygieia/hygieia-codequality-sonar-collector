@@ -8,6 +8,7 @@ import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import org.springframework.web.client.HttpClientErrorException;
 
 public interface SonarClient {
 
@@ -19,7 +20,7 @@ public interface SonarClient {
      */
     void setServerCredentials(String username, String password, String token);
     List<SonarProject> getProjects(String instanceUrl);
-    CodeQuality currentCodeQuality(SonarProject project);
+    CodeQuality currentCodeQuality(SonarProject project) throws HttpClientErrorException, ParseException;
     JSONArray getQualityProfiles(String instanceUrl) throws ParseException;
     List<String> retrieveProfileAndProjectAssociation(String instanceUrl,JSONObject qualityProfile) throws ParseException;
     JSONArray getQualityProfileConfigurationChanges(String instanceUrl,JSONObject qualityProfile) throws ParseException;

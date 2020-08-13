@@ -1,13 +1,13 @@
 package com.capitalone.dashboard.collector;
-
-import com.capitalone.dashboard.model.CodeQuality;
-import com.capitalone.dashboard.model.CollectorItem;
-import com.capitalone.dashboard.model.CollectorItemConfigHistory;
-import com.capitalone.dashboard.model.CollectorType;
-import com.capitalone.dashboard.model.ConfigHistOperationType;
 import com.capitalone.dashboard.model.Configuration;
 import com.capitalone.dashboard.model.SonarCollector;
 import com.capitalone.dashboard.model.SonarProject;
+import com.capitalone.dashboard.model.CollectorItem;
+import com.capitalone.dashboard.model.CollectorType;
+import com.capitalone.dashboard.model.CodeQuality;
+import com.capitalone.dashboard.model.CollectionError;
+import com.capitalone.dashboard.model.ConfigHistOperationType;
+import com.capitalone.dashboard.model.CollectorItemConfigHistory;
 import com.capitalone.dashboard.repository.BaseCollectorRepository;
 import com.capitalone.dashboard.repository.CodeQualityRepository;
 import com.capitalone.dashboard.repository.ComponentRepository;
@@ -25,9 +25,12 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -120,7 +123,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         clean(collector, existingProjects);
 
         if (!CollectionUtils.isEmpty(collector.getSonarServers())) {
-            
+
             for (int i = 0; i < collector.getSonarServers().size(); i++) {
 
                 String instanceUrl = collector.getSonarServers().get(i);
@@ -143,20 +146,19 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 addNewProjects(projects, existingProjects, collector);
 
                 refreshData(enabledProjects(collector, instanceUrl), sonarClient);
-                
+
                 // Changelog apis do not exist for sonarqube versions under version 5.0
                 if (version >= 5.0) {
-                  try {
-                     fetchQualityProfileConfigChanges(collector,instanceUrl,sonarClient);
-                   } catch (Exception e) {
-                     LOG.error(e);
+                    try {
+                        fetchQualityProfileConfigChanges(collector,instanceUrl,sonarClient);
+                    } catch (Exception e) {
+                        LOG.error(e);
                     }
                 }
-
                 log("Finished", start);
             }
         }
-        
+
     }
 
     private String getFromListSafely(List<String> ls, int index){
@@ -167,26 +169,26 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
         return null;
     }
-	/**
-	 * Clean up unused sonar collector items
-	 *
-	 * @param collector
-	 *            the {@link SonarCollector}
-	 */
+    /**
+     * Clean up unused sonar collector items
+     *
+     * @param collector
+     *            the {@link SonarCollector}
+     */
     private void clean(SonarCollector collector, List<SonarProject> existingProjects) {
         // extract unique collector item IDs from components
         // (in this context collector_items are sonar projects)
         Set<ObjectId> uniqueIDs = StreamSupport.stream(dbComponentRepository.findAll().spliterator(),false)
-            .filter( comp -> comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty())
-            .map(comp -> comp.getCollectorItems().get(CollectorType.CodeQuality))
-            // keep nonNull List<CollectorItem>
-            .filter(Objects::nonNull)
-            // merge all lists (flatten) into a stream
-            .flatMap(List::stream)
-            // keep nonNull CollectorItems
-            .filter(ci -> ci != null && ci.getCollectorId().equals(collector.getId()))
-            .map(CollectorItem::getId)
-            .collect(Collectors.toSet());
+                .filter( comp -> comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty())
+                .map(comp -> comp.getCollectorItems().get(CollectorType.CodeQuality))
+                // keep nonNull List<CollectorItem>
+                .filter(Objects::nonNull)
+                // merge all lists (flatten) into a stream
+                .flatMap(List::stream)
+                // keep nonNull CollectorItems
+                .filter(ci -> ci != null && ci.getCollectorId().equals(collector.getId()))
+                .map(CollectorItem::getId)
+                .collect(Collectors.toSet());
 
         List<SonarProject> stateChangeJobList = new ArrayList<>();
 
@@ -202,7 +204,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             sonarProjectRepository.save(stateChangeJobList);
         }
     }
-
 
     private void deleteUnwantedJobs(List<SonarProject> latestProjects, List<SonarProject> existingProjects, SonarCollector collector) {
         List<SonarProject> deleteJobList = new ArrayList<>();
@@ -222,7 +223,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     // then the CollectorItem (sonar proj in this case) can be deleted
 
                     List<com.capitalone.dashboard.model.Component> comps = dbComponentRepository
-                        .findByCollectorTypeAndItemIdIn(CollectorType.CodeQuality, Collections.singletonList(job.getId()));
+                            .findByCollectorTypeAndItemIdIn(CollectorType.CodeQuality, Collections.singletonList(job.getId()));
 
                     for (com.capitalone.dashboard.model.Component c: comps) {
                         c.getCollectorItems().get(CollectorType.CodeQuality).removeIf(collectorItem -> collectorItem.getId().equals(job.getId()));
@@ -248,69 +249,88 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient) {
         long start = System.currentTimeMillis();
         int count = 0;
-
+        int updated = 0;
+        int disabled = 0;
         for (SonarProject project : sonarProjects) {
-            CodeQuality codeQuality = sonarClient.currentCodeQuality(project);
-            if (codeQuality != null && isNewQualityData(project, codeQuality)) {
-                project.setLastUpdated(System.currentTimeMillis());
+            try {
+                CodeQuality codeQuality = sonarClient.currentCodeQuality(project);
+                if (codeQuality != null && isNewQualityData(project, codeQuality)) {
+                    project.setLastUpdated(System.currentTimeMillis());
+                    sonarProjectRepository.save(project);
+                    codeQuality.setCollectorItemId(project.getId());
+                    codeQualityRepository.save(codeQuality);
+                    updated++;
+                }
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                    project.setEnabled(false);
+                    sonarProjectRepository.save(project);
+                    LOG.info("Disabled as a result of HTTPStatus.NOT_FOUND, projectName=" + project.getProjectName()
+                            + ", projectId=" + project.getProjectId());
+                    disabled++;
+                } else {
+                    LOG.error(e.getStackTrace());
+                }
+            } catch (ParseException parseEx) {
+                CollectionError error = new CollectionError("500", parseEx.getMessage());
+                project.getErrors().add(error);
                 sonarProjectRepository.save(project);
-                codeQuality.setCollectorItemId(project.getId());
-                codeQualityRepository.save(codeQuality);
-                count++;
+                LOG.error(parseEx);
             }
+            count++;
         }
-        log("Updated", start, count);
+        LOG.info("refreshData updated, total=" + count + ", updated=" + updated + ", disabled=" + disabled + ", timeTaken=" + start);
     }
 
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
-    	JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);
-    	JSONArray sonarProfileConfigurationChanges = new JSONArray();
-        
-    	for (Object qualityProfile : qualityProfiles ) {
-    		JSONObject qualityProfileJson = (JSONObject) qualityProfile;
+        JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);
+        JSONArray sonarProfileConfigurationChanges = new JSONArray();
 
-    		List<String> sonarProjects = sonarClient.retrieveProfileAndProjectAssociation(instanceUrl,qualityProfileJson);
-    		if (sonarProjects != null){
-    			sonarProfileConfigurationChanges = sonarClient.getQualityProfileConfigurationChanges(instanceUrl,qualityProfileJson);
-    			addNewConfigurationChanges(collector,sonarProfileConfigurationChanges);
-    		}
-    	}
+        for (Object qualityProfile : qualityProfiles ) {
+            JSONObject qualityProfileJson = (JSONObject) qualityProfile;
+
+            List<String> sonarProjects = sonarClient.retrieveProfileAndProjectAssociation(instanceUrl,qualityProfileJson);
+            if (sonarProjects != null){
+                sonarProfileConfigurationChanges = sonarClient.getQualityProfileConfigurationChanges(instanceUrl,qualityProfileJson);
+                addNewConfigurationChanges(collector,sonarProfileConfigurationChanges);
+            }
+        }
     }
-    
+
     private void addNewConfigurationChanges(SonarCollector collector,JSONArray sonarProfileConfigurationChanges){
-    	ArrayList<CollectorItemConfigHistory> profileConfigChanges = new ArrayList<>();
-    	
-    	for (Object configChange : sonarProfileConfigurationChanges) {		
-    		JSONObject configChangeJson = (JSONObject) configChange;
-    		CollectorItemConfigHistory profileConfigChange = new CollectorItemConfigHistory();
-    		Map<String,Object> changeMap = new HashMap<>();
-    		
-    		profileConfigChange.setCollectorItemId(collector.getId());
-    		profileConfigChange.setUserName((String) configChangeJson.get("authorName"));
-    		profileConfigChange.setUserID((String) configChangeJson.get("authorLogin") );
-    		changeMap.put("event", configChangeJson);
-   
-    		profileConfigChange.setChangeMap(changeMap);
-    		
-    		ConfigHistOperationType operation = determineConfigChangeOperationType((String)configChangeJson.get("action"));
-    		profileConfigChange.setOperation(operation);
-    		
-				
-    		long timestamp = convertToTimestamp((String) configChangeJson.get("date"));
-    		profileConfigChange.setTimestamp(timestamp);
-    		
-    		if (isNewConfig(collector.getId(),(String) configChangeJson.get("authorLogin"),operation,timestamp)) {
-    			profileConfigChanges.add(profileConfigChange);
-    		}
-    	}
-    	sonarProfileRepostory.save(profileConfigChanges);
+        ArrayList<CollectorItemConfigHistory> profileConfigChanges = new ArrayList<>();
+
+        for (Object configChange : sonarProfileConfigurationChanges) {
+            JSONObject configChangeJson = (JSONObject) configChange;
+            CollectorItemConfigHistory profileConfigChange = new CollectorItemConfigHistory();
+            Map<String,Object> changeMap = new HashMap<>();
+
+            profileConfigChange.setCollectorItemId(collector.getId());
+            profileConfigChange.setUserName((String) configChangeJson.get("authorName"));
+            profileConfigChange.setUserID((String) configChangeJson.get("authorLogin") );
+            changeMap.put("event", configChangeJson);
+
+            profileConfigChange.setChangeMap(changeMap);
+
+            ConfigHistOperationType operation = determineConfigChangeOperationType((String)configChangeJson.get("action"));
+            profileConfigChange.setOperation(operation);
+
+
+            long timestamp = convertToTimestamp((String) configChangeJson.get("date"));
+            profileConfigChange.setTimestamp(timestamp);
+
+            if (isNewConfig(collector.getId(),(String) configChangeJson.get("authorLogin"),operation,timestamp)) {
+                profileConfigChanges.add(profileConfigChange);
+            }
+        }
+        sonarProfileRepostory.save(profileConfigChanges);
     }
-    
+
     private Boolean isNewConfig(ObjectId collectorId,String authorLogin,ConfigHistOperationType operation,long timestamp) {
-    	List<CollectorItemConfigHistory> storedConfigs = sonarProfileRepostory.findProfileConfigChanges(collectorId, authorLogin,operation,timestamp);
-    	return storedConfigs.isEmpty();
+        List<CollectorItemConfigHistory> storedConfigs = sonarProfileRepostory.findProfileConfigChanges(collectorId, authorLogin,operation,timestamp);
+        return storedConfigs.isEmpty();
     }
-    
+
     private List<SonarProject> enabledProjects(SonarCollector collector, String instanceUrl) {
         return sonarProjectRepository.findEnabledProjects(collector.getId(), instanceUrl);
     }
@@ -369,7 +389,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     }
 
     @SuppressWarnings("unused")
-	private boolean isNewProject(SonarCollector collector, SonarProject application) {
+    private boolean isNewProject(SonarCollector collector, SonarProject application) {
         return sonarProjectRepository.findSonarProject(
                 collector.getId(), application.getInstanceUrl(), application.getProjectId()) == null;
     }
@@ -378,26 +398,25 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         return codeQualityRepository.findByCollectorItemIdAndTimestamp(
                 project.getId(), codeQuality.getTimestamp()) == null;
     }
-    
+
     private long convertToTimestamp(String date) {
-    	
-    	DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
-    	DateTime dt = formatter.parseDateTime(date);
+
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
+        DateTime dt = formatter.parseDateTime(date);
 
         return new DateTime(dt).getMillis();
     }
-    
-    private ConfigHistOperationType determineConfigChangeOperationType(String changeAction){
-    	switch (changeAction) {
-		
-	    	case "DEACTIVATED":
-	    		return ConfigHistOperationType.DELETED;
-	    		
-	    	case "ACTIVATED":
-	    		return ConfigHistOperationType.CREATED;
-	    	default:
-	    		return ConfigHistOperationType.CHANGED;
-    	}	
-    }
 
+    private ConfigHistOperationType determineConfigChangeOperationType(String changeAction){
+        switch (changeAction) {
+
+            case "DEACTIVATED":
+                return ConfigHistOperationType.DELETED;
+
+            case "ACTIVATED":
+                return ConfigHistOperationType.CREATED;
+            default:
+                return ConfigHistOperationType.CHANGED;
+        }
+    }
 }
