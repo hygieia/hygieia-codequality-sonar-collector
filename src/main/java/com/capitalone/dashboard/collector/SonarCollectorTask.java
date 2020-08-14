@@ -264,6 +264,9 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                     project.setEnabled(false);
+                    project.setLastUpdated(System.currentTimeMillis());
+                    CollectionError error = new CollectionError("404", "disabled as the project no longer exists in Sonar");
+                    project.getErrors().add(error);
                     sonarProjectRepository.save(project);
                     LOG.info("Disabled as a result of HTTPStatus.NOT_FOUND, projectName=" + project.getProjectName()
                             + ", projectId=" + project.getProjectId());
