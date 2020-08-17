@@ -195,6 +195,8 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     (!job.isEnabled() && uniqueIDs.contains(job.getId()))) { // OR it was disabled and now on a dashboard
                 if (uniqueIDs.contains(job.getId()) && job.getErrors().size() == 0) {
                     job.setEnabled(true);
+                } else {
+                    job.setEnabled(false);
                 }
                 LOG.info(String.format("ChangeProjectStatus projectName=%s projectId=%s enabled=%s",
                         job.getProjectName(), job.getProjectId(), Boolean.toString(job.isEnabled())));
@@ -364,7 +366,9 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                     if (!s.getProjectId().equals(project.getProjectId()) || !StringUtils.equals(s.getNiceName(),project.getNiceName())) {
                         LOG.info(String.format("UpdatedProject projectName=%s projectId=%s enabled=%s",
                                 project.getProjectName(), s.getProjectId(), Boolean.toString(s.isEnabled())));
-                        s.getErrors().clear();
+                        if (s.getErrors().size() > 0) {
+                            s.getErrors().clear();
+                        }
                         s.setProjectId(project.getProjectId());
                         if (StringUtils.isEmpty(s.getNiceName())) {
                             s.setNiceName(niceName);
