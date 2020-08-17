@@ -191,25 +191,22 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
         for (SonarProject job : existingProjects) {
             // collect the jobs that need to change state : enabled vs disabled.
-            if ((job.isEnabled() && !uniqueIDs.contains(job.getId())) ||  // if it was enabled but not on a dashboard
-                    (!job.isEnabled() && uniqueIDs.contains(job.getId()))) { // OR it was disabled and now on a dashboard
-                boolean updated = false;
-                if (job.isEnabled()) {
-                    if (!uniqueIDs.contains(job.getId())) {
-                        job.setEnabled(false);
-                        updated = true;
-                    }
-                } else {
-                    if (!uniqueIDs.contains(job.getId()) && job.getErrors().size() == 0) {
-                        job.setEnabled(true);
-                        updated = true;
-                    }
+            boolean updated = false;
+            if (job.isEnabled()) {
+                if (!uniqueIDs.contains(job.getId())) {
+                    job.setEnabled(false);
+                    updated = true;
                 }
-                if (updated) {
-                    stateChangeJobList.add(job);
-                    LOG.info(String.format("ChangeProjectStatus projectName=%s projectId=%s enabled=%s",
-                            job.getProjectName(), job.getProjectId(), Boolean.toString(job.isEnabled())));
+            } else {
+                if (uniqueIDs.contains(job.getId()) && job.getErrors().size() == 0) {
+                    job.setEnabled(true);
+                    updated = true;
                 }
+            }
+            if (updated) {
+                stateChangeJobList.add(job);
+                LOG.info(String.format("ChangeProjectStatus projectName=%s projectId=%s enabled=%s",
+                        job.getProjectName(), job.getProjectId(), Boolean.toString(job.isEnabled())));
             }
         }
         if (!CollectionUtils.isEmpty(stateChangeJobList)) {
