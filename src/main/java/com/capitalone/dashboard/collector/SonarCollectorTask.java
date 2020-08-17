@@ -140,9 +140,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 List<SonarProject> projects = sonarClient.getProjects(instanceUrl);
                 latestProjects.addAll(projects);
 
-                int projSize = CollectionUtils.size(projects);
-                log("Fetched projects   " + projSize, start);
-
                 addNewProjects(projects, existingProjects, collector);
 
                 refreshData(enabledProjects(collector, instanceUrl), sonarClient);
@@ -197,6 +194,8 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             if ((job.isEnabled() && !uniqueIDs.contains(job.getId())) ||  // if it was enabled but not on a dashboard
                     (!job.isEnabled() && uniqueIDs.contains(job.getId()))) { // OR it was disabled and now on a dashboard
                 job.setEnabled(uniqueIDs.contains(job.getId()));
+                LOG.info(String.format("ChangeProjectStatus projectName=%s projectId=%s enabled=%s",
+                        job.getProjectName(), job.getProjectId(), Boolean.toString(job.isEnabled())));
                 stateChangeJobList.add(job);
             }
         }
@@ -340,28 +339,35 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
     private void addNewProjects(List<SonarProject> projects, List<SonarProject> existingProjects, SonarCollector collector) {
         long start = System.currentTimeMillis();
-        int count = 0;
+        int newCount = 0;
+        int updatedCount = 0;
         List<SonarProject> newProjects = new ArrayList<>();
         List<SonarProject> updateProjects = new ArrayList<>();
         for (SonarProject project : projects) {
             String niceName = getNiceName(project,collector);
+            // TODO: the algorithm in this loop is of n^2, need to optimize
             if (!existingProjects.contains(project)) {
                 project.setCollectorId(collector.getId());
                 project.setEnabled(false);
                 project.setDescription(project.getProjectName());
                 project.setNiceName(niceName);
                 newProjects.add(project);
-                count++;
+                LOG.info(String.format("NewProject projectName=%s projectId=%s enabled=false",
+                        project.getProjectName(), project.getProjectId()));
+                newCount++;
             }else{
-                if(CollectionUtils.isNotEmpty(existingProjects)){
-                    int[] indexes = IntStream.range(0,existingProjects.size()).filter(i-> existingProjects.get(i).equals(project)).toArray();
-                    for (int index :indexes) {
-                        SonarProject s = existingProjects.get(index);
+                int[] indexes = IntStream.range(0,existingProjects.size()).filter(i-> existingProjects.get(i).equals(project)).toArray();
+                for (int index :indexes) {
+                    SonarProject s = existingProjects.get(index);
+                    if (!s.getProjectId().equals(project.getProjectId()) || !StringUtils.equals(s.getNiceName(),project.getNiceName())) {
                         s.setProjectId(project.getProjectId());
-                        if(StringUtils.isEmpty(s.getNiceName())){
+                        if (StringUtils.isEmpty(s.getNiceName())) {
                             s.setNiceName(niceName);
                         }
                         updateProjects.add(s);
+                        LOG.info(String.format("UpdatedProject projectName=%s projectId=%s enabled=%s",
+                                project.getProjectName(), project.getProjectId(), Boolean.toString(s.isEnabled())));
+                        updatedCount++;
                     }
                 }
             }
@@ -373,7 +379,8 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         if (!CollectionUtils.isEmpty(updateProjects)) {
             sonarProjectRepository.save(updateProjects);
         }
-        log("New projects", start, count);
+        LOG.info(String.format("addNewProjects projectsInSonar=%d existingProjects=%d new=%d updated=%d timeUsed=%d",
+                projects.size(), newCount, existingProjects.size(), updatedCount, System.currentTimeMillis()-start));
     }
 
     private String getNiceName(SonarProject project, SonarCollector sonarCollector){
