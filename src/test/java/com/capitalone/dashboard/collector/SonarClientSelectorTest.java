@@ -1,13 +1,11 @@
 package com.capitalone.dashboard.collector;
 
+import com.capitalone.dashboard.client.RestOperationsSupplier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.web.client.RestOperations;
-
-import com.capitalone.dashboard.util.Supplier;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
@@ -27,7 +25,7 @@ public class SonarClientSelectorTest {
     @Mock
     private DefaultSonar8Client defaultSonar8Client;
     @Mock
-    private Supplier<RestOperations> restOperationsSupplier;
+    private RestOperationsSupplier restOperationsSupplier;
 
     @Test
     public void getSonarClient4() throws Exception {

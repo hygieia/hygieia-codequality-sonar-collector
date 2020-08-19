@@ -1,10 +1,10 @@
 package com.capitalone.dashboard.collector;
 
 import com.capitalone.dashboard.client.RestClient;
+import com.capitalone.dashboard.client.RestOperationsSupplier;
 import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.CodeQualityType;
 import com.capitalone.dashboard.model.SonarProject;
-import com.capitalone.dashboard.util.Supplier;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultSonar6ClientTest {
     @Mock
-    private Supplier<RestOperations> restOperationsSupplier;
+    private RestOperationsSupplier restOperationsSupplier;
     @Mock
     private RestOperations rest;
     @Mock
@@ -46,9 +46,9 @@ public class DefaultSonar6ClientTest {
 
     @Before
     public void init() {
-        when(restOperationsSupplier.get()).thenReturn(rest);
         settings = new SonarSettings();
-        defaultSonar6Client = new DefaultSonar6Client(new RestClient(restOperationsSupplier), settings);
+        when(restOperationsSupplier.get(settings)).thenReturn(rest);
+        defaultSonar6Client = new DefaultSonar6Client(new RestClient(restOperationsSupplier,settings), settings);
     }
 
     @Test
