@@ -120,7 +120,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         udId.add(collector.getId());
         List<SonarProject> existingProjects = sonarProjectRepository.findByCollectorIdIn(udId);
         List<SonarProject> latestProjects = new ArrayList<>();
-        clean(collector, existingProjects);
 
         if (!CollectionUtils.isEmpty(collector.getSonarServers())) {
 
