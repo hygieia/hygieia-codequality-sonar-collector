@@ -3,6 +3,7 @@ package com.capitalone.dashboard.collector;
 
 import java.net.URI;
 
+import com.capitalone.dashboard.client.RestOperationsSupplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
-
-import com.capitalone.dashboard.util.Supplier;
 
 @Component
 public class SonarClientSelector {
@@ -34,13 +33,13 @@ public class SonarClientSelector {
     public SonarClientSelector(
             DefaultSonar8Client sonar8Client, @Qualifier("DefaultSonar6Client") DefaultSonar6Client sonar6Client, DefaultSonar56Client sonar56Client,
             @Qualifier("DefaultSonarClient") DefaultSonarClient sonarClient,
-            Supplier<RestOperations> restOperationsSupplier) {
+            RestOperationsSupplier restOperationsSupplier) {
 
         this.sonar8Client = sonar8Client;
         this.sonar6Client = sonar6Client;
         this.sonar56Client = sonar56Client;
         this.sonarClient = sonarClient;
-        this.rest = restOperationsSupplier.get();
+        this.rest = restOperationsSupplier.get(null);
     }
     
     public Double getSonarVersion(String instanceUrl){
