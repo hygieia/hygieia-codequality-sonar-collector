@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -57,6 +58,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private final SonarSettings sonarSettings;
     private final ComponentRepository dbComponentRepository;
     private final ConfigurationRepository configurationRepository;
+    private AtomicInteger count = new AtomicInteger(0);
 
     @Autowired
     public SonarCollectorTask(TaskScheduler taskScheduler,
@@ -158,6 +160,11 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
     }
 
+    @Override
+    public int getCount() {
+        return count.get();
+    }
+
     private String getFromListSafely(List<String> ls, int index){
         if(CollectionUtils.isEmpty(ls)) {
             return null;
@@ -257,7 +264,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
     private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient) {
         long start = System.currentTimeMillis();
-        int count = 0;
+        count.set(0);
         int updated = 0;
         int disabled = 0;
         for (SonarProject project : sonarProjects) {
@@ -289,9 +296,9 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 sonarProjectRepository.save(project);
                 LOG.error(parseEx);
             }
-            count++;
+            count.getAndIncrement();
         }
-        LOG.info("refreshData updated, total=" + count + ", updated=" + updated + ", disabled=" + disabled + ", timeTaken=" + start);
+        LOG.info("refreshData updated, total=" + count.get() + ", updated=" + updated + ", disabled=" + disabled + ", timeTaken=" + start);
     }
 
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
