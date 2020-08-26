@@ -3,6 +3,7 @@ package com.capitalone.dashboard.collector;
 import com.capitalone.dashboard.client.RestClientSettings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
  */
 @Component
 @ConfigurationProperties(prefix = "sonar")
+@Primary
 public class SonarSettings implements RestClientSettings {
     private String cron;
     private List<String> usernames = new ArrayList<>();
