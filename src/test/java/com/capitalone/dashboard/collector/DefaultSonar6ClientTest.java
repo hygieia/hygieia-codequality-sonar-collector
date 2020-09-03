@@ -47,8 +47,8 @@ public class DefaultSonar6ClientTest {
     @Before
     public void init() {
         settings = new SonarSettings();
-        when(restOperationsSupplier.get(settings)).thenReturn(rest);
-        defaultSonar6Client = new DefaultSonar6Client(new RestClient(restOperationsSupplier,settings), settings);
+        when(restOperationsSupplier.get()).thenReturn(rest);
+        defaultSonar6Client = new DefaultSonar6Client(new RestClient(restOperationsSupplier), settings);
     }
 
     @Test

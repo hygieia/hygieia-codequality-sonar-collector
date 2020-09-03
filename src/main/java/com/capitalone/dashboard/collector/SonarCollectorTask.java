@@ -159,11 +159,6 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
     }
 
-    @Override
-    public int getCount() {
-        return count.get();
-    }
-
     private String getFromListSafely(List<String> ls, int index){
         if(CollectionUtils.isEmpty(ls)) {
             return null;
