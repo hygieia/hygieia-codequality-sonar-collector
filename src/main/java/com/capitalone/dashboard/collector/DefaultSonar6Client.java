@@ -447,7 +447,7 @@ public class DefaultSonar6Client implements SonarClient {
 
     protected HttpHeaders setHeaders(RestUserInfo userInfo){
         if(Objects.isNull(userInfo)) return null;
-        if(StringUtils.isNotBlank(userInfo.getUserId())&& StringUtils.isNotBlank(userInfo.getPassCode())){
+        if(StringUtils.isNotBlank(userInfo.getUserId())){
             return createHeaders(userInfo.getUserId(),userInfo.getPassCode());
         }else if(StringUtils.isNotBlank(userInfo.getToken())){
             return createHeaders(userInfo.getToken());
