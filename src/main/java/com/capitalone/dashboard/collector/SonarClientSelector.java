@@ -39,7 +39,7 @@ public class SonarClientSelector {
         this.sonar6Client = sonar6Client;
         this.sonar56Client = sonar56Client;
         this.sonarClient = sonarClient;
-        this.rest = restOperationsSupplier.get(null);
+        this.rest = restOperationsSupplier.get();
     }
     
     public Double getSonarVersion(String instanceUrl){
