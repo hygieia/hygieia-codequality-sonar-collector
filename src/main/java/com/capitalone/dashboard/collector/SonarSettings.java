@@ -1,6 +1,5 @@
 package com.capitalone.dashboard.collector;
 
-import com.capitalone.dashboard.client.RestClientSettings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -13,7 +12,7 @@ import java.util.List;
  */
 @Component
 @ConfigurationProperties(prefix = "sonar")
-public class SonarSettings implements RestClientSettings {
+public class SonarSettings {
     private String cron;
     private List<String> usernames = new ArrayList<>();
     private List<String> passwords = new ArrayList<>();
@@ -90,7 +89,6 @@ public class SonarSettings implements RestClientSettings {
         this.metricsBefore63 = metricsBefore63;
     }
 
-    @Override
     public int getRequestReadTimeout() {
         return requestReadTimeout;
     }

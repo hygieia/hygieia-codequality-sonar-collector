@@ -50,8 +50,8 @@ public class DefaultSonar8ClientTest {
     @Before
     public void init() {
         settings = new SonarSettings();
-        when(restOperationsSupplier.get(settings)).thenReturn(rest);
-        defaultSonar8Client = new DefaultSonar8Client(new RestClient(restOperationsSupplier,settings), settings);
+        when(restOperationsSupplier.get()).thenReturn(rest);
+        defaultSonar8Client = new DefaultSonar8Client(new RestClient(restOperationsSupplier), settings);
     }
 
     @Test
