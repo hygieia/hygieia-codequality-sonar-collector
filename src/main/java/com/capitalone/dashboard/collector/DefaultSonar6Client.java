@@ -87,13 +87,12 @@ public class DefaultSonar6Client implements SonarClient {
         }
 
         // but username and password override token
-        if(StringUtils.isNotBlank(username) && StringUtils.isNotBlank(password)){
+        if(StringUtils.isNotBlank(username)){
             this.userInfo = new RestUserInfo(username, password);
         }
 
         if (StringUtils.isNotBlank(token)
-                && StringUtils.isNotBlank(username)
-                && StringUtils.isNotBlank(password)) {
+                && StringUtils.isNotBlank(username)) {
             LOG.error("Only one mode of authentication is needed. Either token or username/password. " +
                     "Both modes were detected. Using username/password");
         }
@@ -447,7 +446,7 @@ public class DefaultSonar6Client implements SonarClient {
 
     protected HttpHeaders setHeaders(RestUserInfo userInfo){
         if(Objects.isNull(userInfo)) return null;
-        if(StringUtils.isNotBlank(userInfo.getUserId())&& StringUtils.isNotBlank(userInfo.getPassCode())){
+        if(StringUtils.isNotBlank(userInfo.getUserId())){
             return createHeaders(userInfo.getUserId(),userInfo.getPassCode());
         }else if(StringUtils.isNotBlank(userInfo.getToken())){
             return createHeaders(userInfo.getToken());
