@@ -370,7 +370,10 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 int[] indexes = IntStream.range(0,existingProjects.size()).filter(i-> existingProjects.get(i).equals(project)).toArray();
                 for (int index :indexes) {
                     SonarProject s = existingProjects.get(index);
-                    if (!s.getProjectId().equals(project.getProjectId()) || !StringUtils.equals(s.getNiceName(),project.getNiceName())) {
+                    if(Objects.isNull(s.getProjectId())){
+                        LOG.info("ProjectId is null for sonar project="+s.getProjectName());
+                    }
+                    if ((Objects.nonNull(s.getProjectId()) && !s.getProjectId().equals(project.getProjectId())) || !StringUtils.equals(s.getNiceName(),project.getNiceName())) {
                         LOG.info(String.format("UpdatedProject projectName=%s projectId=%s enabled=%s",
                                 project.getProjectName(), s.getProjectId(), Boolean.toString(s.isEnabled())));
                         if (s.getErrors().size() > 0) {
