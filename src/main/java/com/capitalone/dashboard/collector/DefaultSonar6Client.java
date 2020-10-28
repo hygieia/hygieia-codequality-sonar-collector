@@ -184,6 +184,8 @@ public class DefaultSonar6Client implements SonarClient {
             JSONObject component = child(getResponse(url), COMPONENT);
             if (component != null) {
                 project =  parseSonarProject(instanceUrl, component);
+                project.setEnabled(false);
+                project.setDescription(project.getProjectName());
             }
         } catch (ParseException e) {
             LOG.error("Could not parse response from: " + url, e);

@@ -41,9 +41,15 @@ public class SonarController {
     private SonarClientSelector sonarClientSelector;
 
 
+    private String instanceUrl;
+    private String projectName;
+    private String projectKey;
+    private Collector collector;
+    private SonarClient sonarClient;
 
     @Autowired
-    public SonarController(SonarProjectRepository sonarProjectRepository, CodeQualityRepository codeQualityRepository,
+    public SonarController(SonarProjectRepository sonarProjectRepository,
+                           CodeQualityRepository codeQualityRepository,
                            CollectorRepository collectorRepository,
                            SonarClientSelector sonarClientSelector) {
         this.sonarProjectRepository = sonarProjectRepository;
@@ -54,48 +60,64 @@ public class SonarController {
 
     @RequestMapping(value = "/refresh", method = GET, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<String> refresh(@Valid String projectName, @Valid String projectKey, @Valid String instanceUrl) {
-        if (Objects.isNull(instanceUrl)) {
-            return ResponseEntity.status(HttpStatus.OK).body("sonar instanceUrl is invalid");
-        }
-        Double version = this.sonarClientSelector.getSonarVersion(instanceUrl);
-        SonarClient sonarClient = this.sonarClientSelector.getSonarClient(version);
 
-        Collector sonarCollector = collectorRepository.findByName("Sonar");
-        if (Objects.isNull(sonarCollector)) {
-            return ResponseEntity.status(HttpStatus.OK).body("sonar collector not found");
-        }
-        SonarProject projectToUpdate = null;
-        if (Objects.nonNull(projectName)) {
-            projectToUpdate = getLatestProject(sonarCollector, instanceUrl, projectName);
-        } else {
-            if (Objects.nonNull(projectKey)) {
-                projectToUpdate = sonarClient.getProject(projectKey, instanceUrl);
-                projectToUpdate = getLatestProject(sonarCollector, projectToUpdate.getInstanceUrl(), projectToUpdate.getProjectName());
+        gatherParams(projectName, projectKey, instanceUrl);
+        if (Objects.nonNull(instanceUrl)) {
+            this.sonarClient = this.sonarClientSelector.getSonarClient(this.sonarClientSelector.getSonarVersion(instanceUrl));
+            this.collector = collectorRepository.findByName("Sonar");
+
+            SonarProject projectToRefresh;
+            if (Objects.nonNull(this.collector)) {
+                if ((Objects.nonNull(projectName) && Objects.nonNull(projectToRefresh = getExistingProject()))
+                || (Objects.nonNull(projectKey) && Objects.nonNull(projectToRefresh = createNewProjectIfNotExists()))) {
+                    updateCodeQualityData(projectToRefresh);
+                    return response("successfully refreshed sonar project");
+                }
+                return response("unable to refresh sonar project");
             }
+            return response("sonar collector not found");
         }
-        if (Objects.isNull(projectToUpdate)) {
-            return ResponseEntity.status(HttpStatus.OK).body(String.format("no records found for projectName=%s projectKey=%s instanceUrl=%s",
-                    Objects.toString(projectName,""), Objects.toString(projectKey, ""), instanceUrl));
-        }
-        updateCodeQualityData(sonarCollector, sonarClient, projectToUpdate);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(String.format("Successfully refreshed sonar project : projectName=%s projectKey=%s", Objects.toString(projectName, ""),
-                        Objects.toString(projectKey, "")));
+        return response("sonar instance url is invalid");
     }
 
-    private SonarProject getLatestProject(Collector sonarCollector, String instanceUrl, String projectName) {
-        List<SonarProject> sonarProjects = sonarProjectRepository.findSonarProjectsByProjectName(sonarCollector.getId(), instanceUrl, projectName);
+    private void gatherParams(String projectName, String projectKey, String instanceUrl) {
+        this.projectName = projectName;
+        this.projectKey = projectKey;
+        this.instanceUrl = instanceUrl;
+    }
+
+    private ResponseEntity<String> response(String message) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(String.format(message + " - projectName=%s projectKey=%s instanceUrl=%s ",
+                        Objects.toString(this.projectName, ""), Objects.toString(this.projectKey, ""), this.instanceUrl));
+    }
+
+    private SonarProject createNewProjectIfNotExists() {
+        SonarProject project = null;
+        if (Objects.nonNull(this.projectKey)) {
+            SonarProject newProject = this.sonarClient.getProject(this.projectKey, this.instanceUrl);
+            if (Objects.nonNull(newProject)) {
+                SonarProject existingProject = sonarProjectRepository.findSonarProject(this.collector.getId(),
+                        newProject.getInstanceUrl(), newProject.getProjectId());
+                project = Objects.nonNull(existingProject) ? existingProject : newProject;
+            }
+        }
+        return project;
+    }
+
+    private SonarProject getExistingProject() {
+        List<SonarProject> sonarProjects = sonarProjectRepository.
+                findSonarProjectsByProjectName(this.collector.getId(), this.instanceUrl, this.projectName);
         return CollectionUtils.isNotEmpty(sonarProjects) ?
                 sonarProjects.stream().sorted(Comparator.comparing(SonarProject::getLastUpdated).reversed()).findFirst().get() : null;
     }
 
-    private void updateCodeQualityData(Collector sonarCollector, SonarClient sonarClient, SonarProject project) {
+    private void updateCodeQualityData(SonarProject project) {
         try {
-            CodeQuality codeQuality = sonarClient.currentCodeQuality(project);
+            CodeQuality codeQuality = this.sonarClient.currentCodeQuality(project);
             if (codeQuality != null) {
                 project.setLastUpdated(System.currentTimeMillis());
-                project.setCollectorId(sonarCollector.getId());
+                project.setCollectorId(this.collector.getId());
                 sonarProjectRepository.save(project);
                 codeQuality.setCollectorItemId(project.getId());
                 codeQuality.setTimestamp(System.currentTimeMillis());
