@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 
+import javax.print.attribute.standard.MediaSize;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -206,6 +207,11 @@ public class DefaultSonarClient implements SonarClient {
 		   throw rce;
 	   }
    }
+
+    @Override
+    public SonarProject getProject(String projectKey, String instanceUrl) {
+        return null;
+    }
 
     protected JSONArray parseAsArray(String url) throws ParseException {
         ResponseEntity<String> response = restClient.makeRestCallGet(url, this.userInfo);
