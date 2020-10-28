@@ -256,7 +256,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
     }
 
-    public void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient) {
+    private void refreshData(List<SonarProject> sonarProjects, SonarClient sonarClient) {
         long start = System.currentTimeMillis();
         count.set(0);
         int updated = 0;
@@ -421,7 +421,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 collector.getId(), application.getInstanceUrl(), application.getProjectId()) == null;
     }
 
-    public boolean isNewQualityData(SonarProject project, CodeQuality codeQuality) {
+    private boolean isNewQualityData(SonarProject project, CodeQuality codeQuality) {
         return codeQualityRepository.findByCollectorItemIdAndTimestamp(
                 project.getId(), codeQuality.getTimestamp()) == null;
     }

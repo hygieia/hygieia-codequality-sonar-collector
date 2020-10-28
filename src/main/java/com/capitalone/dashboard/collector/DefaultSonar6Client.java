@@ -179,25 +179,18 @@ public class DefaultSonar6Client implements SonarClient {
 
     public SonarProject getProject(String projectKey, String instanceUrl) {
         String url = String.format(instanceUrl + URL_PROJECT_INFO, projectKey);
-
+        SonarProject project = null;
         try {
-            JSONObject jsonObject = getResponse(url);
-            if (!jsonObject.isEmpty()) {
-                JSONObject component = child(jsonObject, COMPONENT);
-                if (component != null) {
-                    SonarProject sonarProject = new SonarProject();
-                    sonarProject.setInstanceUrl(instanceUrl);
-                    sonarProject.setProjectId(str(component, ID));
-                    sonarProject.setProjectName(str(component, NAME));
-                    return sonarProject;
-                }
+            JSONObject component = child(getResponse(url), COMPONENT);
+            if (component != null) {
+                project =  parseSonarProject(instanceUrl, component);
             }
         } catch (ParseException e) {
             LOG.error("Could not parse response from: " + url, e);
         } catch (RestClientException rce) {
             LOG.error(rce);
         }
-        return null;
+        return project;
     }
 
     @Override
