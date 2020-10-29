@@ -64,7 +64,7 @@ public class SonarController {
                 if ((Objects.nonNull(projectName) && Objects.nonNull(projectToRefresh = getExistingProject()))
                 || (Objects.nonNull(projectKey) && Objects.nonNull(projectToRefresh = createNewProjectIfNotExists()))) {
                     SonarCollectorUtil.updateCodeQualityData(this.collector, this.sonarClient, projectToRefresh);
-                    return response("successfully refreshed sonar project");
+                    return response("&quot;successfully refreshed sonar project&quot;");
                 }
                 return response("unable to refresh sonar project");
             }
