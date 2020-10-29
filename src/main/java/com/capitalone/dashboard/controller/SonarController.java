@@ -60,13 +60,16 @@ public class SonarController {
             this.collector = collectorRepository.findByName("Sonar");
 
             SonarProject projectToRefresh;
+            String resMsg;
             if (Objects.nonNull(this.collector)) {
                 if ((Objects.nonNull(projectName) && Objects.nonNull(projectToRefresh = getExistingProject()))
                 || (Objects.nonNull(projectKey) && Objects.nonNull(projectToRefresh = createNewProjectIfNotExists()))) {
                     SonarCollectorUtil.updateCodeQualityData(this.collector, this.sonarClient, projectToRefresh);
-                    return response("\"successfully refreshed sonar project\"");
+                    resMsg = "successfully refreshed sonar project";
+                    return response(String.format("%s", resMsg));
                 }
-                return response("unable to refresh sonar project");
+                resMsg = "unable to refresh sonar project";
+                return response(resMsg);
             }
             return response("sonar collector not found");
         }
