@@ -207,6 +207,11 @@ public class DefaultSonarClient implements SonarClient {
 	   }
    }
 
+    @Override
+    public SonarProject getProject(String projectKey, String instanceUrl) {
+        return null;
+    }
+
     protected JSONArray parseAsArray(String url) throws ParseException {
         ResponseEntity<String> response = restClient.makeRestCallGet(url, this.userInfo);
         return (JSONArray) new JSONParser().parse(response.getBody());

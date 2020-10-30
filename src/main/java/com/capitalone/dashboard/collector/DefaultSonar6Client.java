@@ -38,6 +38,7 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String URL_RESOURCES_AUTHENTICATED = "/api/projects/search?ps=500";
     private static final String URL_RESOURCE_DETAILS = "/api/measures/component?format=json&componentId=%s&metricKeys=%s&includealerts=true";
     static final String URL_PROJECT_ANALYSES = "/api/project_analyses/search?project=%s";
+    private static final String URL_PROJECT_INFO = "%s/api/components/show?component=%s";
     private static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     private static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     private static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
@@ -55,6 +56,7 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String STATUS_ALERT = "ALERT";
     private static final String DATE = "date";
     private static final String EVENTS = "events";
+    private static final String COMPONENT = "component";
 
     protected final RestClient restClient;
     protected RestUserInfo userInfo = new RestUserInfo("","");
@@ -173,6 +175,24 @@ public class DefaultSonar6Client implements SonarClient {
     private void getProjects(String url, String key, JSONArray jsonArray, int pageNumber) throws ParseException {
         String urlFinal = url+"&p="+pageNumber;
         jsonArray.addAll(parseAsArray(urlFinal, key));
+    }
+
+    public SonarProject getProject(String projectKey, String instanceUrl) {
+        String url = String.format(URL_PROJECT_INFO, instanceUrl, projectKey);
+        SonarProject project = null;
+        try {
+            JSONObject component = child(getResponse(url), COMPONENT);
+            if (component != null) {
+                project =  parseSonarProject(instanceUrl, component);
+                project.setEnabled(false);
+                project.setDescription(project.getProjectName());
+            }
+        } catch (ParseException e) {
+            LOG.error("Could not parse response from: " + url, e);
+        } catch (RestClientException rce) {
+            LOG.error(rce);
+        }
+        return project;
     }
 
     @Override
@@ -329,6 +349,11 @@ public class DefaultSonar6Client implements SonarClient {
     protected String str(JSONObject json, String key) {
         Object obj = json.get(key);
         return obj == null ? null : obj.toString();
+    }
+
+    protected JSONObject child(JSONObject json, String key) {
+        JSONObject obj = (JSONObject) json.get(key);
+        return obj == null ? null : obj;
     }
 
     protected String strSafe(JSONObject json, String key) {
