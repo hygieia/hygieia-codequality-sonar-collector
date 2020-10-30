@@ -86,7 +86,7 @@ public class SonarController {
         status.append(String.format(" - projectName=%s projectKey=%s instanceUrl=%s ", Objects.toString(this.projectName, ""),
                 Objects.toString(this.projectKey, ""), this.instanceUrl));
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("status", status.toString());
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         return new ResponseEntity<>(status.toString(), httpHeaders, HttpStatus.OK);
     }
 
