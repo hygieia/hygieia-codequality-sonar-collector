@@ -11,10 +11,7 @@ import com.capitalone.dashboard.util.SonarCollectorUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -63,19 +60,17 @@ public class SonarController {
             this.collector = collectorRepository.findByName("Sonar");
 
             SonarProject projectToRefresh;
-            String resMsg;
             if (Objects.nonNull(this.collector)) {
                 if ((Objects.nonNull(projectName) && Objects.nonNull(projectToRefresh = getExistingProject()))
                 || (Objects.nonNull(projectKey) && Objects.nonNull(projectToRefresh = createNewProjectIfNotExists()))) {
                     SonarCollectorUtil.updateCodeQualityData(this.collector, this.sonarClient, projectToRefresh);
-                    return response(StringEscapeUtils.escapeHtml4(Response.SUCCESS.name()));
+                    return sendResponse("successfully refreshed sonar project");
                 }
-                resMsg = "unable to refresh sonar project";
-                return response(resMsg);
+                return sendResponse("unable to refresh sonar project");
             }
-            return response("sonar collector not found");
+            return sendResponse("sonar collector not found");
         }
-        return response("sonar instance url is invalid");
+        return sendResponse("sonar instance url is invalid");
     }
 
     private void gatherParams(String projectName, String projectKey, String instanceUrl) {
@@ -84,10 +79,15 @@ public class SonarController {
         this.instanceUrl = instanceUrl;
     }
 
-    private ResponseEntity<String> response(String message) {
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).allow(HttpMethod.GET)
+    private ResponseEntity<String> sendResponse(String message) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("status", message);
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        return new ResponseEntity<>(message, httpHeaders, HttpStatus.OK);
+
+        /*return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).allow(HttpMethod.GET)
                 .body(String.format(message + " - projectName=%s projectKey=%s instanceUrl=%s ",
-                        Objects.toString(this.projectName, ""), Objects.toString(this.projectKey, ""), this.instanceUrl));
+                        Objects.toString(this.projectName, ""), Objects.toString(this.projectKey, ""), this.instanceUrl));*/
     }
 
     private SonarProject createNewProjectIfNotExists() {
