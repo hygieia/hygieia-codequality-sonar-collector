@@ -9,9 +9,11 @@ import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.repository.SonarProjectRepository;
 import com.capitalone.dashboard.util.SonarCollectorUtil;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -80,14 +82,12 @@ public class SonarController {
     }
 
     private ResponseEntity<String> sendResponse(String message) {
+        StringBuilder status = new StringBuilder(message);
+        status.append(String.format(" - projectName=%s projectKey=%s instanceUrl=%s ", Objects.toString(this.projectName, ""),
+                Objects.toString(this.projectKey, ""), this.instanceUrl));
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("status", message);
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        return new ResponseEntity<>(message, httpHeaders, HttpStatus.OK);
-
-        /*return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).allow(HttpMethod.GET)
-                .body(String.format(message + " - projectName=%s projectKey=%s instanceUrl=%s ",
-                        Objects.toString(this.projectName, ""), Objects.toString(this.projectKey, ""), this.instanceUrl));*/
+        httpHeaders.add("status", status.toString());
+        return new ResponseEntity<>(status.toString(), httpHeaders, HttpStatus.OK);
     }
 
     private SonarProject createNewProjectIfNotExists() {
@@ -108,13 +108,5 @@ public class SonarController {
                 findSonarProjectsByProjectName(this.collector.getId(), this.instanceUrl, this.projectName);
         return CollectionUtils.isNotEmpty(sonarProjects) ?
                 sonarProjects.stream().sorted(Comparator.comparing(SonarProject::getLastUpdated).reversed()).findFirst().get() : null;
-    }
-}
-
-enum Response {
-    SUCCESS("successfully refreshed sonar project");
-    private final String msg;
-    Response(String msg) {
-        this.msg = msg;
     }
 }

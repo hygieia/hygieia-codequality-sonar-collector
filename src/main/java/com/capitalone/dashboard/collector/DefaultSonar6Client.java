@@ -38,7 +38,7 @@ public class DefaultSonar6Client implements SonarClient {
     private static final String URL_RESOURCES_AUTHENTICATED = "/api/projects/search?ps=500";
     private static final String URL_RESOURCE_DETAILS = "/api/measures/component?format=json&componentId=%s&metricKeys=%s&includealerts=true";
     static final String URL_PROJECT_ANALYSES = "/api/project_analyses/search?project=%s";
-    private static final String URL_PROJECT_INFO = "/api/components/show?component=%s";
+    private static final String URL_PROJECT_INFO = "%s/api/components/show?component=%s";
     private static final String URL_QUALITY_PROFILES = "/api/qualityprofiles/search";
     private static final String URL_QUALITY_PROFILE_PROJECT_DETAILS = "/api/qualityprofiles/projects?key=";
     private static final String URL_QUALITY_PROFILE_CHANGES = "/api/qualityprofiles/changelog?profileKey=";
@@ -178,7 +178,7 @@ public class DefaultSonar6Client implements SonarClient {
     }
 
     public SonarProject getProject(String projectKey, String instanceUrl) {
-        String url = String.format(instanceUrl + URL_PROJECT_INFO, projectKey);
+        String url = String.format(URL_PROJECT_INFO, instanceUrl, projectKey);
         SonarProject project = null;
         try {
             JSONObject component = child(getResponse(url), COMPONENT);
