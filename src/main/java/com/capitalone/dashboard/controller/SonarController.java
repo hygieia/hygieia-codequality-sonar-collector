@@ -9,6 +9,7 @@ import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.repository.SonarProjectRepository;
 import com.capitalone.dashboard.util.SonarCollectorUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,8 +66,7 @@ public class SonarController {
                 if ((Objects.nonNull(projectName) && Objects.nonNull(projectToRefresh = getExistingProject()))
                 || (Objects.nonNull(projectKey) && Objects.nonNull(projectToRefresh = createNewProjectIfNotExists()))) {
                     SonarCollectorUtil.updateCodeQualityData(this.collector, this.sonarClient, projectToRefresh);
-                    resMsg = "successfully refreshed sonar project";
-                    return response(String.format("%s", resMsg));
+                    return response(StringEscapeUtils.escapeHtml4("successfully refreshed sonar project"));
                 }
                 resMsg = "unable to refresh sonar project";
                 return response(resMsg);
