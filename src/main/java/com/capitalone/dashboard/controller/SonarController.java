@@ -84,6 +84,7 @@ public class SonarController {
 
     private ResponseEntity<String> response(String message) {
         return ResponseEntity.status(HttpStatus.OK)
+                .header("X-XSS-Protection", "1; mode=block")
                 .body(String.format(message + " - projectName=%s projectKey=%s instanceUrl=%s ",
                         Objects.toString(this.projectName, ""), Objects.toString(this.projectKey, ""), this.instanceUrl));
     }
