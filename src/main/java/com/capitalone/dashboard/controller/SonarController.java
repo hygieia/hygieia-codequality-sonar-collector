@@ -66,7 +66,7 @@ public class SonarController {
                 if ((Objects.nonNull(projectName) && Objects.nonNull(projectToRefresh = getExistingProject()))
                 || (Objects.nonNull(projectKey) && Objects.nonNull(projectToRefresh = createNewProjectIfNotExists()))) {
                     SonarCollectorUtil.updateCodeQualityData(this.collector, this.sonarClient, projectToRefresh);
-                    return response(StringEscapeUtils.escapeHtml4("successfully refreshed sonar project"));
+                    return response(StringEscapeUtils.escapeHtml4(Response.SUCCESS.name()));
                 }
                 resMsg = "unable to refresh sonar project";
                 return response(resMsg);
@@ -107,5 +107,13 @@ public class SonarController {
                 findSonarProjectsByProjectName(this.collector.getId(), this.instanceUrl, this.projectName);
         return CollectionUtils.isNotEmpty(sonarProjects) ?
                 sonarProjects.stream().sorted(Comparator.comparing(SonarProject::getLastUpdated).reversed()).findFirst().get() : null;
+    }
+}
+
+enum Response {
+    SUCCESS("successfully refreshed sonar project");
+    private final String msg;
+    Response(String msg) {
+        this.msg = msg;
     }
 }
