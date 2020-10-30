@@ -11,7 +11,9 @@ import com.capitalone.dashboard.util.SonarCollectorUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -83,8 +85,7 @@ public class SonarController {
     }
 
     private ResponseEntity<String> response(String message) {
-        return ResponseEntity.status(HttpStatus.OK)
-                .header("X-XSS-Protection", "1; mode=block")
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).allow(HttpMethod.GET)
                 .body(String.format(message + " - projectName=%s projectKey=%s instanceUrl=%s ",
                         Objects.toString(this.projectName, ""), Objects.toString(this.projectKey, ""), this.instanceUrl));
     }
