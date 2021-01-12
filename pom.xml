@@ -7,7 +7,7 @@
   <description>CodeQuality Collector Microservices currently collects data from Sonar</description>
   <url>https://hygieia.github.io/Hygieia/getting_started.html</url>
   <packaging>jar</packaging>
-  <version>3.2.3-SNAPSHOT</version>
+  <version>3.2.4-SNAPSHOT</version>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
