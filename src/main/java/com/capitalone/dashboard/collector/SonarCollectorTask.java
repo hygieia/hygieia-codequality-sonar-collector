@@ -117,7 +117,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     @Override
     public void collect(SonarCollector collector) {
         long start = System.currentTimeMillis();
-
+        int totalProjectCount = 0;
         Set<ObjectId> udId = new HashSet<>();
         udId.add(collector.getId());
         List<SonarProject> existingProjects = sonarProjectRepository.findByCollectorIdIn(udId);
@@ -143,7 +143,9 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
 
                 addNewProjects(projects, existingProjects, collector);
 
-                refreshData(enabledProjects(collector, instanceUrl), sonarClient);
+                List<SonarProject> enabledProjects = enabledProjects(collector, instanceUrl);
+                totalProjectCount = enabledProjects.size();
+                refreshData(enabledProjects, sonarClient);
 
                 // Changelog apis do not exist for sonarqube versions under version 5.0
                 if (version >= 5.0) {
@@ -153,10 +155,16 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                         LOG.error(e);
                     }
                 }
-                log("Finished", start);
+
             }
         }
+        long end = System.currentTimeMillis();
+        long elapsedSeconds = (end - start) / 1000;
+        LOG.info(String.format("SonarCollectorTask:collect stop, totalProcessSeconds=%d, totalProjectCount=%d",
+                elapsedSeconds, totalProjectCount));
 
+        collector.setLastExecutionRecordCount(totalProjectCount);
+        collector.setLastExecutedSeconds(elapsedSeconds);
     }
 
     private String getFromListSafely(List<String> ls, int index){
