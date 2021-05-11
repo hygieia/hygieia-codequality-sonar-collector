@@ -1,3 +1,4 @@
+##For testing GitAction
 ## Hygieia Collector to collect static code analysis data from Sonar
 [![Build Status](https://travis-ci.com/Hygieia/hygieia-codequality-sonar-collector.svg?branch=master)](https://travis-ci.com/Hygieia/hygieia-codequality-sonar-collector)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Hygieia_hygieia-codequality-sonar-collector&metric=alert_status)](https://sonarcloud.io/dashboard?id=Hygieia_hygieia-codequality-sonar-collector)
