@@ -8,12 +8,12 @@ import java.util.List;
 
 public interface SonarProjectRepository extends BaseCollectorItemRepository<SonarProject> {
 
-    @Query(value="{ 'collectorId' : ?0, options.instanceUrl : ?1, options.projectId : ?2}")
+    @Query(value="{ 'collectorId' : ?0, 'options.instanceUrl' : ?1, 'options.projectId' : ?2}")
     SonarProject findSonarProject(ObjectId collectorId, String instanceUrl, String projectId);
 
-    @Query(value="{ 'collectorId' : ?0, options.instanceUrl : ?1, options.projectName : ?2}")
+    @Query(value="{ 'collectorId' : ?0, 'options.instanceUrl' : ?1, 'options.projectName' : ?2}")
     List<SonarProject> findSonarProjectsByProjectName(ObjectId collectorId, String instanceUrl, String projectName);
 
-    @Query(value="{ 'collectorId' : ?0, options.instanceUrl : ?1, enabled: true}")
+    @Query(value="{ 'collectorId' : ?0, 'options.instanceUrl' : ?1, 'enabled' : true}")
     List<SonarProject> findEnabledProjects(ObjectId collectorId, String instanceUrl);
 }

@@ -1,17 +1,17 @@
 package com.capitalone.dashboard.collector;
 
 import com.capitalone.dashboard.client.RestOperationsSupplier;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SonarClientSelectorTest {
 
     @InjectMocks
@@ -30,37 +30,37 @@ public class SonarClientSelectorTest {
     @Test
     public void getSonarClient4() throws Exception {
         SonarClient sonarClient = selector.getSonarClient((double) 4);
-        assertThat(sonarClient, instanceOf(DefaultSonarClient.class));
+        assertThat(sonarClient).isInstanceOf(DefaultSonarClient.class);
     }
 
     @Test
     public void getSonarClient56() throws Exception {
         SonarClient sonarClient = selector.getSonarClient((double) 5.6);
-        assertThat(sonarClient, instanceOf(DefaultSonar56Client.class));
+        assertThat(sonarClient).isInstanceOf(DefaultSonar56Client.class);
     }
 
     @Test
     public void getSonarClientNull() throws Exception {
         SonarClient sonarClient = selector.getSonarClient(null);
-        assertThat(sonarClient, instanceOf(DefaultSonarClient.class));
+        assertThat(sonarClient).isInstanceOf(DefaultSonarClient.class);
     }
 
     @Test
     public void getSonarClient54() throws Exception {
         SonarClient sonarClient = selector.getSonarClient(5.4);
-        assertThat(sonarClient, instanceOf(DefaultSonarClient.class));
+        assertThat(sonarClient).isInstanceOf(DefaultSonarClient.class);
     }
 
     @Test
     public void getSonarClient6() throws Exception {
         SonarClient sonarClient = selector.getSonarClient(6.31);
-        assertThat(sonarClient, instanceOf(DefaultSonar6Client.class));
+        assertThat(sonarClient).isInstanceOf(DefaultSonar6Client.class);
     }
 
     @Test
     public void getSonarClient83() throws Exception {
         SonarClient sonarClient = selector.getSonarClient(8.3);
-        assertThat(sonarClient, instanceOf(DefaultSonar8Client.class));
+        assertThat(sonarClient).isInstanceOf(DefaultSonar8Client.class);
     }
 
 }

@@ -53,7 +53,7 @@ public class DefaultSonarClient implements SonarClient {
     protected static final String DATE = "date";
 
     protected final RestClient restClient;
-    protected RestUserInfo userInfo;
+    protected RestUserInfo userInfo = new RestUserInfo("","");
 
     @Autowired
     public DefaultSonarClient(RestClient restClient, SonarSettings settings) {
@@ -69,7 +69,7 @@ public class DefaultSonarClient implements SonarClient {
     @Override
     public void setServerCredentials(String username, String password, String token) {
         // use token when given
-        if (StringUtils.isNotBlank(token)) {
+        if (StringUtils.isNotEmpty(token)) {
             this.userInfo.setToken(token);
             this.userInfo.setUserId(null);
             this.userInfo.setPassCode(null);
@@ -83,7 +83,7 @@ public class DefaultSonarClient implements SonarClient {
         if (StringUtils.isNotBlank(token)
                 && StringUtils.isNotBlank(username)
                 && StringUtils.isNotBlank(password)) {
-            LOG.error("Only one mode of authentication is needed. Either token or username/password. " +
+            LOG.warn("Only one mode of authentication is needed. Either token or username/password. " +
                     "Both modes were detected. Using username/password");
         }
     }
