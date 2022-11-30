@@ -7,17 +7,17 @@
   <description>CodeQuality Collector Microservices currently collects data from Sonar</description>
   <url>https://hygieia.github.io/Hygieia/getting_started.html</url>
   <packaging>jar</packaging>
-  <version>3.2.5-SNAPSHOT</version>
+  <version>3.2.6-SNAPSHOT</version>
 
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>1.5.22.RELEASE</version>
-  </parent>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.12</version>
+    </parent>
 
   <organization>
     <name>Hygieia</name>
-    <url>https://www.github.com/Hygieia/</url>
+    <url>https://www.github.com/hygieia/</url>
   </organization>
 
   <scm>
@@ -43,103 +43,434 @@
     </site>
   </distributionManagement>
 
-  <properties>
-    <!-- Dependencies -->
-    <com.capitalone.dashboard.core.version>3.15.26</com.capitalone.dashboard.core.version>
-    <spring-security.version>4.2.18.RELEASE</spring-security.version>
-    <tomcat.version>8.5.57</tomcat.version>
-    <commons-beanutils.version>1.9.4</commons-beanutils.version>
-    <commons-codec.version>1.14</commons-codec.version>
-    <commons-collections4.version>4.1</commons-collections4.version>
-    <commons-io.version>2.4</commons-io.version>
-    <commons-lang.version>3.10</commons-lang.version>
-    <fongo.version>2.2.0-RC2</fongo.version>
-    <guava.version>29.0-jre</guava.version>
-    <hibernate-validator.version>5.4.2.Final</hibernate-validator.version>
-    <jackson.version>2.10.3</jackson.version>
-    <jasypt.version>1.18</jasypt.version>
-    <logback.version>1.2.3</logback.version>
-    <mongodb.version>3.6.4</mongodb.version>
-    <assertj.version>3.9.0</assertj.version>
+    <properties>
+        <sonar.skip>true</sonar.skip>
+        <java.version>11</java.version>
+        <apache.rat.plugin.version>0.13</apache.rat.plugin.version>
+        <bc.version>3.0.1</bc.version>
+        <repository.name>hygieia-sonar-collector-ace</repository.name>
+        <com.capitalone.dashboard.core.version>4.0.1</com.capitalone.dashboard.core.version>
+        <commons.io.version>2.8.0</commons.io.version>
+        <commons.lang.version>3.8.1</commons.lang.version>
+        <coveralls.maven.plugin.version>4.3.0</coveralls.maven.plugin.version>
+        <developmentTeam>The Hygieia Team</developmentTeam>
+        <jacoco.maven.plugin.version>0.8.7</jacoco.maven.plugin.version>
+        <jacoco.coverage.percentage.minimum>0.000</jacoco.coverage.percentage.minimum> <!-- will fix in future-->
+        <jacoco.classes.missed.minimum>500</jacoco.classes.missed.minimum>
+        <japicmp.breakBuildOnBinaryIncompatibleModifications>true</japicmp.breakBuildOnBinaryIncompatibleModifications>
+        <japicmp.breakBuildOnSourceIncompatibleModifications>true</japicmp.breakBuildOnSourceIncompatibleModifications>
+        <japicmp.skip>false</japicmp.skip>
+        <java.compilation.source>11</java.compilation.source>
+        <java.compilation.target>11</java.compilation.target>
+        <maven.changes.plugin.version>2.12.1</maven.changes.plugin.version>
+        <maven.checkstyle.plugin.version>3.0.0</maven.checkstyle.plugin.version>
+        <maven.compiler.plugin.version>3.1</maven.compiler.plugin.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.javadoc.plugin.version>3.2.0</maven.javadoc.plugin.version>
+        <maven.pmd.plugin.version>3.11.0</maven.pmd.plugin.version>
+        <maven.project-info.version>3.0.0</maven.project-info.version>
+        <maven.scm.publish.plugin.version>3.0.0</maven.scm.publish.plugin.version>
+        <maven.site.plugin.version>3.7.1</maven.site.plugin.version>
+        <maven.changes.plugin.version>2.12.1</maven.changes.plugin.version>
+        <mockito.core.version>2.22.0</mockito.core.version>
+        <org.joda.joda-convert.version>1.8.1</org.joda.joda-convert.version>
+        <site.publish.url>https://github.com/Hygieia/${project.artifactId}</site.publish.url>
+        <site.publish.checkout.directory>site-content</site.publish.checkout.directory>
+        <spotbugs.plugin.version>3.1.11</spotbugs.plugin.version>
+        <jackson.version>2.10.5</jackson.version>
+        <guava.version>30.0</guava.version>
+        <logback.version>1.2.3</logback.version>
+        <jjwt.version>0.6.0</jjwt.version>
+    </properties>
 
-    <!-- Plugins -->
-    <apache.rat.plugin.version>0.13</apache.rat.plugin.version>
-    <coveralls.maven.plugin.version>4.3.0</coveralls.maven.plugin.version>
-    <developmentTeam>The Hygieia Team</developmentTeam>
-    <jacoco.maven.plugin.version>0.8.3</jacoco.maven.plugin.version>
-    <jacoco.coverage.percentage.minimum>0.010</jacoco.coverage.percentage.minimum><!-- will fix in future-->
-    <jacoco.classes.missed.minimum>15</jacoco.classes.missed.minimum>
-    <japicmp.breakBuildOnBinaryIncompatibleModifications>true</japicmp.breakBuildOnBinaryIncompatibleModifications>
-    <japicmp.breakBuildOnSourceIncompatibleModifications>true</japicmp.breakBuildOnSourceIncompatibleModifications>
-    <japicmp.skip>false</japicmp.skip>
-    <java.compilation.source>1.8</java.compilation.source>
-    <java.compilation.target>1.8</java.compilation.target>
-    <maven.changes.plugin.version>2.12.1</maven.changes.plugin.version>
-    <maven.checkstyle.plugin.version>3.0.0</maven.checkstyle.plugin.version>
-    <maven.compiler.plugin.version>3.1</maven.compiler.plugin.version>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <maven.javadoc.plugin.version>3.1.0</maven.javadoc.plugin.version>
-    <maven.pmd.plugin.version>3.11.0</maven.pmd.plugin.version>
-    <maven.project-info.version>3.0.0</maven.project-info.version>
-    <maven.scm.publish.plugin.version>3.0.0</maven.scm.publish.plugin.version>
-    <maven.site.plugin.version>3.7.1</maven.site.plugin.version>
-    <site.publish.url>https://github.com/Hygieia/hygieia-codequality-sonar-collector</site.publish.url>
-    <site.publish.checkout.directory>site-content</site.publish.checkout.directory>
-    <spotbugs.plugin.version>3.1.11</spotbugs.plugin.version>
-  </properties>
 
-  <issueManagement>
+    <issueManagement>
     <system>github</system>
     <url>https://github.com/Hygieia/hygieia-codequality-sonar-collector/issues</url>
   </issueManagement>
 
-  <developers>
-    <developer>
-      <name>Amit Mawkin</name>
-    </developer>
-    <developer>
-      <name>Tapabrata Topo Pal</name>
-      <email>tapabrata.pal@capitalone.com</email>
-      <organization>CapitalOne</organization>
-      <organizationUrl>http://www.capitalone.com</organizationUrl>
-    </developer>
-    <developer>
-      <name>Raghavendra Vema</name>
-      <email>ragha.vema@capitalone.com</email>
-      <organization>CapitalOne</organization>
-      <organizationUrl>http://www.capitalone.com</organizationUrl>
-    </developer>
-    <developer>
-      <name>Nireesh Thiruveedula</name>
-      <email>nireesh.thiruveedula@capitalone.com</email>
-      <organization>CapitalOne</organization>
-      <organizationUrl>http://www.capitalone.com</organizationUrl>
-    </developer>
-    <developer>
-      <name>Stephen Hughes</name>
-      <email>stephen.hughes@capitalone.com</email>
-      <organization>CapitalOne</organization>
-      <organizationUrl>http://www.capitalone.com</organizationUrl>
-    </developer>
-  </developers>
+    <developers>
+        <developer>
+            <name>Raghavendra Vema</name>
+            <email>ragha.vema@capitalone.com</email>
+            <organization>CapitalOne</organization>
+            <organizationUrl>http://www.capitalone.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Nireesh Thiruveedula</name>
+            <email>nireesh.thiruveedula@capitalone.com</email>
+            <organization>CapitalOne</organization>
+            <organizationUrl>http://www.capitalone.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Aravindhan Murugan</name>
+            <email>aravindhan.murugan@capitalone.com</email>
+            <organization>CapitalOne</organization>
+            <organizationUrl>http://www.capitalone.com</organizationUrl>
+        </developer>
+    </developers>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.capitalone.dashboard</groupId>
-      <artifactId>core</artifactId>
-      <version>${com.capitalone.dashboard.core.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-mongodb</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.capitalone.dashboard</groupId>
+            <artifactId>core</artifactId>
+            <version>${com.capitalone.dashboard.core.version}</version>
+            <classifier>embed</classifier>
+        </dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons.io.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.fakemongo</groupId>
+            <artifactId>fongo</artifactId>
+            <version>2.1.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.21</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons.lang.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.joda</groupId>
+            <artifactId>joda-convert</artifactId>
+            <version>${org.joda.joda-convert.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.2.8</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.8</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>2.5.12</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.minidev</groupId>
+                    <artifactId>json-smart</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <version>2.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security.oauth</groupId>
+            <artifactId>spring-security-oauth2</artifactId>
+            <version>2.5.2.RELEASE</version>
+        </dependency>
+
+        <!-- Jackson -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <!-- <version>2.11.0.rc1</version> -->
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml</groupId>
+            <artifactId>classmate</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.9.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver</artifactId>
+            <version>3.12.11</version>
+        </dependency>
+        <dependency>
+            <groupId>de.bwaldvogel</groupId>
+            <artifactId>mongo-java-server-core</artifactId>
+            <version>1.39.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.bwaldvogel</groupId>
+            <artifactId>mongo-java-server-memory-backend</artifactId>
+            <version>1.36.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-core</artifactId>
+            <version>2.0.0-RC.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>2.0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito2</artifactId>
+            <version>2.0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+            <version>3.2.9</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-core</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-websocket</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-el</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.8.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>2.23.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>2.15.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
+            <version>1.8.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>5.7.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>spring-mock-mvc</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.hakky54</groupId>
+            <artifactId>logcaptor</artifactId>
+            <version>2.3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymock</artifactId>
+            <version>4.3</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- WhiteSource Security Check Suggested Fixes	-->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <version>5.6.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-mongodb</artifactId>
+            <version>3.3.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>5.3.19</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.10.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>5.6.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security.oauth</groupId>
+            <artifactId>spring-security-oauth</artifactId>
+            <version>2.5.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>5.3.20</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.querydsl</groupId>
+            <artifactId>querydsl-mongodb</artifactId>
+            <version>5.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.querydsl</groupId>
+            <artifactId>querydsl-apt</artifactId>
+            <version>5.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>5.3.22</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.32</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <resources>
@@ -158,8 +489,17 @@
                 </excludes>
             </resource>
         </resources>
-        <finalName>${artifactId}</finalName>
+        <finalName>${project.artifactId}</finalName>
         <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.0</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.0</version>
+            </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -275,6 +615,17 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.sonatype.plexus</groupId>
+                        <artifactId>plexus-cipher</artifactId>
+                        <version>1.4</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-publish-plugin</artifactId>
                 <version>${maven.scm.publish.plugin.version}</version>
                 <configuration>
@@ -300,7 +651,7 @@
                     <execution>
                         <id>scm-publish</id>
                         <phase>site-deploy</phase>
-                        <!--  deploy site with maven-scm-publish-plugin  -->
+                        <!-- deploy site with maven-scm-publish-plugin -->
                         <goals>
                             <goal>publish-scm</goal>
                         </goals>
@@ -334,6 +685,7 @@
                     <failOnError>false</failOnError>
                     <failOnWarnings>false</failOnWarnings>
                     <excludes>**/*Test*.java</excludes>
+                    <source>8</source>
                 </configuration>
             </plugin>
             <plugin>
@@ -412,49 +764,13 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-changes-plugin</artifactId>
-                <version>${maven.changes.plugin.version}</version>
-                <configuration>
-                    <xmlPath>${basedir}/src/changes/changes.xml</xmlPath>
-                    <columnNames>Fix Version,Key,Component,Summary,Type,Resolution,Status</columnNames>
-                    <!-- Sort cols in natural order when using JQL for JIRA 5.1 -->
-                    <sortColumnNames>Fix Version DESC,Type,Key DESC</sortColumnNames>
-                    <resolutionIds>Fixed</resolutionIds>
-                    <statusIds>Closed</statusIds>
-                    <!-- Don't include sub-task -->
-                    <typeIds>Bug,New Feature,Task,Improvement,Wish,Test</typeIds>
-                    <!-- For JIRA >= 5.1 -->
-                    <useJql>true</useJql>
-                    <onlyCurrentVersion>false</onlyCurrentVersion>
-                    <maxEntries>100</maxEntries>
-                    <runOnlyAtExecutionRoot>false</runOnlyAtExecutionRoot>
-                    <template>release-notes.vm</template>
-                    <templateDirectory>src/changes</templateDirectory>
-                    <issueLinkTemplatePerSystem>
-                        <github>http://github.com/Hygieia/${repository.name}/issues/%ISSUE%</github>
-                    </issueLinkTemplatePerSystem>
-                </configuration>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>changes-report</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
                 <version>${maven.project-info.version}</version>
-                <!--
-                  Unfortunately it does not appear to be possible to override
-                  reports configured in a parent POM.
-                  See https://jira.codehaus.org/browse/MPIR-241
-                  and https://issues.apache.org/jira/browse/MPOM-32
-                  So we define here all those reports that are suitable for
-                  all components.
-                  Components can add extra reports if they wish, but cannot disable any.
-                -->
+                <!-- Unfortunately it does not appear to be possible to override reports
+                    configured in a parent POM. See https://jira.codehaus.org/browse/MPIR-241
+                    and https://issues.apache.org/jira/browse/MPOM-32 So we define here all those
+                    reports that are suitable for all components. Components can add extra reports
+                    if they wish, but cannot disable any. -->
                 <reportSets>
                     <reportSet>
                         <reports>
@@ -483,9 +799,8 @@
                 <artifactId>maven-site-plugin</artifactId>
                 <version>${maven.site.plugin.version}</version>
                 <configuration>
-                    <!-- Exclude the navigation file for Maven 1 sites
-                      and the changes file used by the changes-plugin,
-                      as they interfere with the site generation. -->
+                    <!-- Exclude the navigation file for Maven 1 sites and the changes file
+                        used by the changes-plugin, as they interfere with the site generation. -->
                     <moduleExcludes>
                         <xdoc>navigation.xml,changes.xml</xdoc>
                     </moduleExcludes>
@@ -496,15 +811,11 @@
 
     <profiles>
         <profile>
-            <!--
-              Generate release notes in top-level directory from src/changes/changes.xml
-              Usage:
-              mvn changes:announcement-generate -Prelease-notes [-Dchanges.version=nnn]
-              Defining changes.version allows one to create the RN without first removing the SNAPSHOT suffix.
-              Requires file src/changes/release-notes.vm.
-              A sample template is available from:
-              https://svn.apache.org/repos/asf/commons/proper/commons-parent/trunk/src/changes/release-notes.vm
-            -->
+            <!-- Generate release notes in top-level directory from src/changes/changes.xml
+                Usage: mvn changes:announcement-generate -Prelease-notes [-Dchanges.version=nnn]
+                Defining changes.version allows one to create the RN without first removing
+                the SNAPSHOT suffix. Requires file src/changes/release-notes.vm. A sample
+                template is available from: https://svn.apache.org/repos/asf/commons/proper/commons-parent/trunk/src/changes/release-notes.vm -->
             <id>release-notes</id>
             <build>
                 <plugins>
@@ -557,19 +868,19 @@
                                 <configuration>
                                     <tasks>
                                         <exec executable="git">
-                                            <arg line="clone -b gh-pages --single-branch ${site.publish.url} ${site.publish.checkout.directory}"/>
+                                            <arg line="clone -b gh-pages --single-branch ${site.publish.url} ${site.publish.checkout.directory}" />
                                         </exec>
 
                                         <exec executable="git" dir="site-content">
-                                            <arg line="fetch origin gh-pages"/>
+                                            <arg line="fetch origin gh-pages" />
                                         </exec>
 
                                         <exec executable="git" dir="site-content">
-                                            <arg line="reset --hard origin/gh-pages"/>
+                                            <arg line="reset --hard origin/gh-pages" />
                                         </exec>
 
                                         <pathconvert pathsep=" " property="dirs">
-                                            <dirset dir="${site.publish.checkout.directory}" includes="*"/>
+                                            <dirset dir="${site.publish.checkout.directory}" includes="*" />
                                         </pathconvert>
                                     </tasks>
                                 </configuration>
@@ -606,10 +917,10 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.5.1</version>
+                        <version>3.8.1</version>
                         <configuration>
-                            <source>1.8</source>
-                            <target>1.8</target>
+                            <source>11</source>
+                            <target>11</target>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -628,7 +939,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -672,5 +983,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

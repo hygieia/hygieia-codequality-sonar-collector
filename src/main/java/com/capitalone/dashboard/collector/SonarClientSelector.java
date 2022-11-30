@@ -43,7 +43,7 @@ public class SonarClientSelector {
     }
     
     public Double getSonarVersion(String instanceUrl){
-    	Double version = 5.0;
+    	Double version = 7.9;
     	try {
     	    ResponseEntity<String> versionResponse = rest.exchange(URI.create(instanceUrl + URL_VERSION_RESOURCE), HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), String.class);
     	    if(!versionResponse.getBody().isEmpty()) {
@@ -54,13 +54,13 @@ public class SonarClientSelector {
     	        }
     	    }    
     	} catch (RestClientException e) {
-    		LOG.info("Rest exception occured at fetching sonar version");
+    		LOG.info("Rest exception occurred at fetching sonar version - " + e.getMessage());
     	}
-  
         return version;
     }
 
     public SonarClient getSonarClient(Double version) {
+        LOG.info(String.format("getSonarClient version=%s", version));
         if(version != null && version == 5.6){
           return sonar56Client;
         }

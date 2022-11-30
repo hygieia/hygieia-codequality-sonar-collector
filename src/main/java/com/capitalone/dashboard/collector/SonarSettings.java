@@ -17,8 +17,8 @@ public class SonarSettings {
     private List<String> usernames = new ArrayList<>();
     private List<String> passwords = new ArrayList<>();
     private List<String> servers = new ArrayList<>();
-    private List<String> niceNames;
-    private List<String> tokens;
+    private List<String> niceNames = new ArrayList<>();
+    private List<String> tokens = new ArrayList<>();
     private String metrics63andAbove; // 6.3 is the sonar version
     private String metricsBefore63;
 

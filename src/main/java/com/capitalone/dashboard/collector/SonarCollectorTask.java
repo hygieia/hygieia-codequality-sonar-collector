@@ -117,6 +117,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     @Override
     public void collect(SonarCollector collector) {
         long start = System.currentTimeMillis();
+        LOG.info(String.format("SonarCollectorTask:collect() start=%d", start));
         int totalProjectCount = 0;
         Set<ObjectId> udId = new HashSet<>();
         udId.add(collector.getId());
@@ -136,16 +137,20 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 String username = getFromListSafely(sonarSettings.getUsernames(), i);
                 String password = getFromListSafely(sonarSettings.getPasswords(), i);
                 String token = getFromListSafely(sonarSettings.getTokens(), i);
+                LOG.info(String.format("SonarCollectorTask:collect() token valid=%s", StringUtils.isNotBlank(token)));
                 sonarClient.setServerCredentials(username, password, token);
 
                 List<SonarProject> projects = sonarClient.getProjects(instanceUrl);
                 latestProjects.addAll(projects);
+                LOG.info(String.format("SonarCollectorTask:collect() latestProjects size=%d ", latestProjects.size()));
 
                 addNewProjects(projects, existingProjects, collector);
+                LOG.info(String.format("SonarCollectorTask:collect() addNewProjects() executed"));
 
                 List<SonarProject> enabledProjects = enabledProjects(collector, instanceUrl);
                 totalProjectCount = enabledProjects.size();
                 refreshData(enabledProjects, sonarClient);
+                LOG.info(String.format("SonarCollectorTask:collect() refreshData() executed"));
 
                 // Changelog apis do not exist for sonarqube versions under version 5.0
                 if (version >= 5.0) {
@@ -184,6 +189,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private void clean(SonarCollector collector, List<SonarProject> existingProjects) {
         // extract unique collector item IDs from components
         // (in this context collector_items are sonar projects)
+    	
         Set<ObjectId> uniqueIDs = StreamSupport.stream(dbComponentRepository.findAll().spliterator(),false)
                 .filter( comp -> comp.getCollectorItems() != null && !comp.getCollectorItems().isEmpty())
                 .map(comp -> comp.getCollectorItems().get(CollectorType.CodeQuality))
@@ -219,7 +225,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             }
         }
         if (!CollectionUtils.isEmpty(stateChangeJobList)) {
-            sonarProjectRepository.save(stateChangeJobList);
+            sonarProjectRepository.saveAll(stateChangeJobList);
         }
     }
 
@@ -249,7 +255,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                             c.getCollectorItems().remove(CollectorType.CodeQuality);
                         }
                     }
-                    dbComponentRepository.save(comps);
+                    dbComponentRepository.saveAll(comps);
 
                     // other collectors also delete the widget but not here
                     // should not remove the code analysis widget
@@ -260,7 +266,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
             }
         }
         if (!CollectionUtils.isEmpty(deleteJobList)) {
-            sonarProjectRepository.delete(deleteJobList);
+            sonarProjectRepository.deleteAll(deleteJobList);
         }
     }
 
@@ -306,6 +312,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
     private void fetchQualityProfileConfigChanges(SonarCollector collector,String instanceUrl,SonarClient sonarClient) throws org.json.simple.parser.ParseException{
         JSONArray qualityProfiles = sonarClient.getQualityProfiles(instanceUrl);
         JSONArray sonarProfileConfigurationChanges = new JSONArray();
+        if (Objects.isNull(qualityProfiles)) return;
 
         for (Object qualityProfile : qualityProfiles ) {
             JSONObject qualityProfileJson = (JSONObject) qualityProfile;
@@ -344,7 +351,7 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
                 profileConfigChanges.add(profileConfigChange);
             }
         }
-        sonarProfileRepostory.save(profileConfigChanges);
+        sonarProfileRepostory.saveAll(profileConfigChanges);
     }
 
     private Boolean isNewConfig(ObjectId collectorId,String authorLogin,ConfigHistOperationType operation,long timestamp) {
@@ -399,10 +406,10 @@ public class SonarCollectorTask extends CollectorTask<SonarCollector> {
         }
         //save all in one shot
         if (!CollectionUtils.isEmpty(newProjects)) {
-            sonarProjectRepository.save(newProjects);
+            sonarProjectRepository.saveAll(newProjects);
         }
         if (!CollectionUtils.isEmpty(updateProjects)) {
-            sonarProjectRepository.save(updateProjects);
+            sonarProjectRepository.saveAll(updateProjects);
         }
         LOG.info(String.format("addNewProjects projectsInSonar=%d existingProjects=%d new=%d updated=%d timeUsed=%d",
                 projects.size(), existingProjects.size(), newCount, updatedCount, System.currentTimeMillis()-start));

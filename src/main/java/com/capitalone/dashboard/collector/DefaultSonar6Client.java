@@ -95,7 +95,7 @@ public class DefaultSonar6Client implements SonarClient {
 
         if (StringUtils.isNotBlank(token)
                 && StringUtils.isNotBlank(username)) {
-            LOG.error("Only one mode of authentication is needed. Either token or username/password. " +
+            LOG.warn("Only one mode of authentication is needed. Either token or username/password. " +
                     "Both modes were detected. Using username/password");
         }
     }

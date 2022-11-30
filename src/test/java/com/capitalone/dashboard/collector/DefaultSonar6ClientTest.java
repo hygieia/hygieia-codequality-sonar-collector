@@ -1,34 +1,35 @@
 package com.capitalone.dashboard.collector;
 
-import com.capitalone.dashboard.client.RestClient;
-import com.capitalone.dashboard.client.RestOperationsSupplier;
-import com.capitalone.dashboard.model.CodeQuality;
-import com.capitalone.dashboard.model.CodeQualityType;
-import com.capitalone.dashboard.model.SonarProject;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestOperations;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
+import com.capitalone.dashboard.client.RestClient;
+import com.capitalone.dashboard.client.RestOperationsSupplier;
+import com.capitalone.dashboard.model.CodeQuality;
+import com.capitalone.dashboard.model.CodeQualityType;
+import com.capitalone.dashboard.model.SonarProject;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
-
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultSonar6ClientTest {
     @Mock
     private RestOperationsSupplier restOperationsSupplier;
@@ -36,6 +37,8 @@ public class DefaultSonar6ClientTest {
     private RestOperations rest;
     @Mock
     private SonarSettings settings;
+    @Mock
+    private RestClient restClient;
     private DefaultSonar6Client defaultSonar6Client;
 
     private static final String URL_RESOURCES = "/api/components/search?qualifiers=TRK&ps=500";
@@ -44,7 +47,7 @@ public class DefaultSonar6ClientTest {
     private static final String SONAR_URL = "http://sonar.com";
     static final String METRICS = "ncloc,violations,new_vulnerabilities,critical_violations,major_violations,blocker_violations,tests,test_success_density,test_errors,test_failures,coverage,line_coverage,sqale_index,alert_status,quality_gate_details";
 
-    @Before
+    @BeforeEach
     public void init() {
         settings = new SonarSettings();
         when(restOperationsSupplier.get()).thenReturn(rest);
@@ -55,13 +58,15 @@ public class DefaultSonar6ClientTest {
     public void getProjects() throws Exception {
         String projectJson = getJson("sonar6projects.json");
         String projectsUrl = SONAR_URL + URL_RESOURCES;
-        doReturn(new ResponseEntity<>(projectJson, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
+        defaultSonar6Client.setServerCredentials("username", "password", "token");
+        doReturn(new ResponseEntity<>(projectJson, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
         List<SonarProject> projects = defaultSonar6Client.getProjects(SONAR_URL);
-        assertThat(projects.size(), is(2));
-        assertThat(projects.get(0).getProjectName(), is("com.capitalone.test:TestProject"));
-        assertThat(projects.get(1).getProjectName(), is("com.capitalone.test:AnotherTestProject"));
-        assertThat(projects.get(0).getProjectId(), is("AVu3b-MAphY78UZXuYHp"));
-        assertThat(projects.get(1).getProjectId(), is("BVx3b-MAphY78UZXuYHp"));
+        assertEquals(projects.size(), 2);
+        
+        assertThat(projects.get(0).getProjectName()).isEqualTo("com.capitalone.test:TestProject");
+        assertThat(projects.get(1).getProjectName()).isEqualTo("com.capitalone.test:AnotherTestProject");
+        assertThat(projects.get(0).getProjectId()).isEqualTo("AVu3b-MAphY78UZXuYHp");
+        assertThat(projects.get(1).getProjectId()).isEqualTo("BVx3b-MAphY78UZXuYHp");
     }
 
     @Test
@@ -75,14 +80,17 @@ public class DefaultSonar6ClientTest {
         String projectsUrl2 = SONAR_URL + URL_RESOURCES+"&p=2";
         String projectsUrl3 = SONAR_URL + URL_RESOURCES+"&p=3";
         String projectsUrl4 = SONAR_URL + URL_RESOURCES+"&p=4";
-        doReturn(new ResponseEntity<>(projectJson500, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        doReturn(new ResponseEntity<>(projectJson500, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl1), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        doReturn(new ResponseEntity<>(projectJson1000, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl2), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        doReturn(new ResponseEntity<>(projectJson1500, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl3), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        doReturn(new ResponseEntity<>(projectJson2000, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl4), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
+        
+        defaultSonar6Client.setServerCredentials("username", "password", "token");
+        
+        doReturn(new ResponseEntity<>(projectJson500, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        doReturn(new ResponseEntity<>(projectJson500, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl1), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        doReturn(new ResponseEntity<>(projectJson1000, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl2), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        doReturn(new ResponseEntity<>(projectJson1500, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl3), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        doReturn(new ResponseEntity<>(projectJson2000, HttpStatus.OK)).when(rest).exchange(eq(projectsUrl4), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
 
         List<SonarProject> projects = defaultSonar6Client.getProjects(SONAR_URL);
-        assertThat(projects.size(), is(2000));
+        assertEquals(projects.size(), 2000);
     }
 
     @Test
@@ -92,13 +100,17 @@ public class DefaultSonar6ClientTest {
         SonarProject project = getProject();
         String measureUrl = String.format(SONAR_URL + URL_RESOURCE_DETAILS,project.getProjectId(),METRICS);
         String analysesUrl = String.format(SONAR_URL + URL_PROJECT_ANALYSES,project.getProjectName());
-        doReturn(new ResponseEntity<>(measureJson, HttpStatus.OK)).when(rest).exchange(eq(measureUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        doReturn(new ResponseEntity<>(analysesJson, HttpStatus.OK)).when(rest).exchange(eq(analysesUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
+        
+        defaultSonar6Client.setServerCredentials("username", "password", "token");
+       
+        doReturn(new ResponseEntity<>(measureJson, HttpStatus.OK)).when(rest).exchange(eq(measureUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        doReturn(new ResponseEntity<>(analysesJson, HttpStatus.OK)).when(rest).exchange(eq(analysesUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
         CodeQuality quality = defaultSonar6Client.currentCodeQuality(getProject());
-        assertThat(quality.getMetrics().size(), is(15));
-        assertThat(quality.getType(), is (CodeQualityType.StaticAnalysis));
-        assertThat(quality.getName(), is ("com.capitalone.test:TestProject"));
-        assertThat(quality.getVersion(), is ("2.0.0"));
+        assertEquals(quality.getMetrics().size(), 15);
+        
+        assertThat(quality.getType().name()).isEqualTo(CodeQualityType.StaticAnalysis.name());
+        assertThat(quality.getName()).isEqualTo("com.capitalone.test:TestProject");
+        assertThat(quality.getVersion()).isEqualTo("2.0.0");
     }
 
 
@@ -109,13 +121,18 @@ public class DefaultSonar6ClientTest {
         SonarProject project = getProject();
         String measureUrl = String.format(SONAR_URL + URL_RESOURCE_DETAILS,project.getProjectId(),METRICS);
         String analysesUrl = String.format(SONAR_URL + URL_PROJECT_ANALYSES,project.getProjectName());
-        doReturn(new ResponseEntity<>(measureJson, HttpStatus.OK)).when(rest).exchange(eq(measureUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
-        doReturn(new ResponseEntity<>(analysesJson, HttpStatus.OK)).when(rest).exchange(eq(analysesUrl), eq(HttpMethod.GET), Matchers.any(HttpEntity.class), eq(String.class));
+        
+        defaultSonar6Client.setServerCredentials("username", "password", "token");
+        doReturn(new ResponseEntity<>(measureJson, HttpStatus.OK)).when(rest).exchange(eq(measureUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        doReturn(new ResponseEntity<>(analysesJson, HttpStatus.OK)).when(rest).exchange(eq(analysesUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        
+        //when(restClient.makeRestCallGet(anyString(),any(HttpHeaders.class))).thenReturn(new ResponseEntity<>(measureJson, HttpStatus.OK));
+        
         CodeQuality quality = defaultSonar6Client.currentCodeQuality(getProject());
-        assertThat(quality.getMetrics().size(), is(15));
-        assertThat(quality.getType(), is (CodeQualityType.StaticAnalysis));
-        assertThat(quality.getName(), is ("com.capitalone.test:TestProject"));
-
+        assertEquals(quality.getMetrics().size(), 15);
+        
+        assertThat(quality.getType().name()).isEqualTo(CodeQualityType.StaticAnalysis.name());
+        assertThat(quality.getName()).isEqualTo("com.capitalone.test:TestProject");
     }
 
 
