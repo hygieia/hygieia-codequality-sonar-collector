@@ -49,7 +49,7 @@
         <apache.rat.plugin.version>0.13</apache.rat.plugin.version>
         <bc.version>3.0.1</bc.version>
         <repository.name>hygieia-sonar-collector-ace</repository.name>
-        <com.capitalone.dashboard.core.version>04.06.03.35</com.capitalone.dashboard.core.version>
+        <com.capitalone.dashboard.core.version>4.0.1</com.capitalone.dashboard.core.version>
         <commons.io.version>2.8.0</commons.io.version>
         <commons.lang.version>3.8.1</commons.lang.version>
         <coveralls.maven.plugin.version>4.3.0</coveralls.maven.plugin.version>
