@@ -1,4 +1,4 @@
-# Due to changes in the priorities, this project is currently not being supported. The project is archived as of 6/1/223 and will be available in a read-only state. Please note, since archival, the project is not maintained or reviewed
+# Due to changes in the priorities, this project is currently not being supported. The project is archived as of 6/1/2023 and will be available in a read-only state. Please note, since archival, the project is not maintained or reviewed
 
 ## Hygieia Collector to collect static code analysis data from Sonar
 [![Build Status](https://travis-ci.com/Hygieia/hygieia-codequality-sonar-collector.svg?branch=master)](https://travis-ci.com/Hygieia/hygieia-codequality-sonar-collector)
